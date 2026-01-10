@@ -19,7 +19,7 @@ console.log("check:", typeof apiRouter, typeof notFound, typeof errorHandler);
 
 app.use("/api", apiRouter);
 
-// app.use(notFound);
-// app.use(errorHandler);
+app.use(notFound);
+app.use(errorHandler);
 
 export default app;

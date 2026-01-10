@@ -7,17 +7,34 @@ import { makeUploader, buildPublicUploadUrl } from "../lib/uploads";
 import { z } from "zod";
 import path from "path";
 import { requireFile } from "../middleware/requireFile";
-import { validateBody } from "../middleware/validate";
-import { createIdeaBodySchema } from "../schemas/ideasSchemas";
+import { validateBody, validateParams } from "../middleware/validate";
+import { createIdeaBodySchema, ideaIdParamsSchema } from "../schemas/ideasSchemas";
 import analyzeRouter from "./analyze";
+import likesRouter from "./likes";
+import commentsRouter from "./comments";
+
 
 
 const router = Router();
 const uploadIdeaImage = makeUploader("ideas");
-router.use("/:id/analyze", analyzeRouter);
 
-router.post("/", requireAuth, uploadIdeaImage.single("image"),
-  requireFile("image"), validateBody(createIdeaBodySchema), async (req: any, res) => {
+function requireText(req: any, res: any, next: any) {
+  const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
+  if (!text) return res.status(400).json({ message: "text is required" });
+  next();
+}
+router.use("/:id/analyze", analyzeRouter);
+router.use("/:id/likes", likesRouter);
+router.use("/:id/comments", commentsRouter);
+
+router.post(
+  "/",
+  requireAuth,
+  uploadIdeaImage.single("image"),
+  requireFile("image"),
+  requireText,
+  validateBody(createIdeaBodySchema),
+  async (req: any, res) => {
     console.log("requireFile type:", typeof requireFile);
 
     const { text } = req.validatedBody;
@@ -98,9 +115,9 @@ router.get("/mine", requireAuth, async (req: AuthedRequest, res) => {
   });
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", validateParams(ideaIdParamsSchema), async (req, res) => {
   const idea = await Idea.findById(req.params.id).lean();
-  if (!idea) return res.status(404).json({ message: "Not found" });
+  if (!idea) return res.status(404).json({ message: "id doesnt exist" });
 
   const likesCount = await Like.countDocuments({ ideaId: idea._id });
   const commentsCount = await Comment.countDocuments({ ideaId: idea._id });
@@ -122,7 +139,12 @@ const updateSchema = z.object({
   removeImage: z.string().optional()
 });
 
-router.patch("/:id", requireAuth, uploadIdeaImage.single("image"), async (req: AuthedRequest, res) => {
+router.patch(
+  "/:id",
+  validateParams(ideaIdParamsSchema),
+  requireAuth,
+  uploadIdeaImage.single("image"),
+  async (req: AuthedRequest, res) => {
   const parsed = updateSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ message: "Validation error" });
 
@@ -142,9 +164,10 @@ router.patch("/:id", requireAuth, uploadIdeaImage.single("image"), async (req: A
 
   await idea.save();
   res.json({ id: String(idea._id) });
-});
+  }
+);
 
-router.delete("/:id", requireAuth, async (req: AuthedRequest, res) => {
+router.delete("/:id", validateParams(ideaIdParamsSchema), requireAuth, async (req: AuthedRequest, res) => {
   const idea = await Idea.findById(req.params.id);
   if (!idea) return res.status(404).json({ message: "Not found" });
   if (String(idea.authorId) !== req.user!.userId) return res.status(403).json({ message: "Forbidden" });

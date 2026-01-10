@@ -5,5 +5,7 @@ export const createIdeaBodySchema = z.object({
 });
 
 export const ideaIdParamsSchema = z.object({
-  id: z.string().min(1, "Idea id is required")
+  id: z
+    .string()
+    .regex(/^[0-9a-fA-F]{24}$/, "Invalid idea id")
 });
