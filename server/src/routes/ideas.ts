@@ -6,32 +6,33 @@ import { Comment } from "../models/Comment";
 import { makeUploader, buildPublicUploadUrl } from "../lib/uploads";
 import { z } from "zod";
 import path from "path";
+import { requireFile } from "../middleware/requireFile";
+import { validateBody } from "../middleware/validate";
+import { createIdeaBodySchema } from "../schemas/ideasSchemas";
+
+
 
 const router = Router();
 const uploadIdeaImage = makeUploader("ideas");
 
-const createSchema = z.object({
-  text: z.string().min(1)
-});
+router.post("/", requireAuth, uploadIdeaImage.single("image"),
+  requireFile("image"), validateBody(createIdeaBodySchema), async (req: any, res) => {
+    console.log("requireFile type:", typeof requireFile);
 
-router.post("/", requireAuth, uploadIdeaImage.single("image"), async (req: AuthedRequest, res) => {
-  const parsed = createSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ message: "Validation error" });
+    const { text } = req.validatedBody;
 
-  let imageUrl: string | undefined;
-  if (req.file) {
     const filename = path.basename(req.file.path);
-    imageUrl = buildPublicUploadUrl("ideas", filename);
+    const imageUrl = buildPublicUploadUrl("ideas", filename);
+
+    const idea = await Idea.create({
+      authorId: req.user!.userId,
+      text,
+      imageUrl
+    });
+
+    res.status(201).json({ id: String(idea._id) });
   }
-
-  const idea = await Idea.create({
-    authorId: req.user!.userId,
-    text: parsed.data.text,
-    imageUrl
-  });
-
-  res.status(201).json({ id: String(idea._id) });
-});
+);
 
 router.get("/", async (req, res) => {
   const limit = Math.min(Number(req.query.limit || 10), 30);
@@ -153,8 +154,5 @@ router.delete("/:id", requireAuth, async (req: AuthedRequest, res) => {
 
   res.status(204).send();
 });
-
-import likesRouter from "./likes";
-router.use("/:id/likes", (req, res, next) => { next(); }, likesRouter);
 
 export default router;
