@@ -11,6 +11,8 @@ const router = Router({ mergeParams: true });
  * /api/ideas/{id}/likes:
  *   post:
  *     summary: Like idea
+ *     tags:
+ *       - Likes
  *     parameters:
  *       - in: path
  *         name: id
@@ -49,6 +51,8 @@ router.post("/", requireAuth, async (req: AuthedRequest, res, next) => {
  * /api/ideas/{id}/likes:
  *   delete:
  *     summary: Remove like
+ *     tags:
+ *       - Likes
  *     parameters:
  *       - in: path
  *         name: id

@@ -14,9 +14,16 @@ const uploadAvatar = makeUploader("avatars");
  * /api/users/me:
  *   get:
  *     summary: Get current user
+ *     description: Get the current user's profile
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: User profile
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: Not found
  */
@@ -35,11 +42,31 @@ const updateSchema = z.object({
  * /api/users/me:
  *   patch:
  *     summary: Update current user
+ *     description: Update the current user's profile
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 example: newusername
+ *               avatar:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       200:
  *         description: Updated user
  *       400:
  *         description: Validation error
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: Not found
  *       409:
@@ -73,6 +100,8 @@ router.patch("/me", requireAuth, uploadAvatar.single("avatar"), async (req: Auth
  * /api/users/{id}:
  *   get:
  *     summary: Get user by id
+ *     tags:
+ *       - Users
  *     parameters:
  *       - in: path
  *         name: id

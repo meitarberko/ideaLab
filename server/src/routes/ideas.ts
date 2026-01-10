@@ -30,11 +30,32 @@ router.use("/:id/comments", commentsRouter);
  * /api/ideas:
  *   post:
  *     summary: Create idea
+ *     description: Create a new idea
+ *     tags:
+ *       - Ideas
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [text]
+ *             properties:
+ *               text:
+ *                 type: string
+ *                 example: "This is my idea"
+ *               image:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       201:
  *         description: Idea created
  *       400:
  *         description: Validation error
+ *       401:
+ *         description: Unauthorized
  */
 router.post(
   "/",
@@ -68,6 +89,8 @@ router.post(
  * /api/ideas:
  *   get:
  *     summary: Get ideas feed (cursor paging)
+ *     tags:
+ *       - Ideas
  *     parameters:
  *       - in: query
  *         name: limit
@@ -126,6 +149,11 @@ router.get("/", async (req, res) => {
  * /api/ideas/mine:
  *   get:
  *     summary: Get my ideas (cursor paging)
+ *     description: Get ideas created by the current user
+ *     tags:
+ *       - Ideas
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: limit
@@ -138,6 +166,8 @@ router.get("/", async (req, res) => {
  *     responses:
  *       200:
  *         description: User ideas
+ *       401:
+ *         description: Unauthorized
  */
 router.get("/mine", requireAuth, async (req: Request, res: Response) => {
   const authed = req as AuthedRequest;
@@ -168,6 +198,8 @@ router.get("/mine", requireAuth, async (req: Request, res: Response) => {
  * /api/ideas/{id}:
  *   get:
  *     summary: Get idea by id
+ *     tags:
+ *       - Ideas
  *     parameters:
  *       - in: path
  *         name: id
@@ -208,16 +240,42 @@ const updateSchema = z.object({
  * /api/ideas/{id}:
  *   patch:
  *     summary: Update idea
+ *     description: Update an existing idea
+ *     tags:
+ *       - Ideas
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         schema:
  *           type: string
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               text:
+ *                 type: string
+ *                 example: "Updated idea text"
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *               removeImage:
+ *                 type: string
+ *                 example: "true"
+ *             example:
+ *               text: "Updated idea text"
+ *               removeImage: "true"
  *     responses:
  *       200:
  *         description: Idea updated
  *       400:
  *         description: Validation error
+ *       401:
+ *         description: Unauthorized
  *       403:
  *         description: Forbidden
  *       404:
@@ -257,6 +315,8 @@ router.patch(
  * /api/ideas/{id}:
  *   delete:
  *     summary: Delete idea
+ *     tags:
+ *       - Ideas
  *     parameters:
  *       - in: path
  *         name: id

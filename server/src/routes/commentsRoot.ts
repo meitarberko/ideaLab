@@ -9,6 +9,8 @@ const router = Router();
  * /api/comments/{id}:
  *   delete:
  *     summary: Delete comment
+ *     tags:
+ *       - Comments
  *     parameters:
  *       - in: path
  *         name: id

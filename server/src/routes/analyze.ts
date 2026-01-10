@@ -51,6 +51,8 @@ User Question: """${question || "General analysis requested"}"""
  * /api/ideas/{id}/analyze:
  *   post:
  *     summary: Analyze idea
+ *     tags:
+ *       - Analyze
  *     parameters:
  *       - in: path
  *         name: id

@@ -30,6 +30,26 @@ const registerSchema = z.object({
  * /api/auth/register:
  *   post:
  *     summary: Register user
+ *     tags:
+ *       - Auth
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [username, email, password]
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 example: johndoe
+ *               email:
+ *                 type: string
+ *                 example: john@example.com
+ *               password:
+ *                 type: string
+ *                 example: "12345678"
  *     responses:
  *       201:
  *         description: User created
@@ -77,6 +97,23 @@ const loginSchema = z.object({
  * /api/auth/login:
  *   post:
  *     summary: Login user
+ *     tags:
+ *       - Auth
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [username, password]
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 example: johndoe
+ *               password:
+ *                 type: string
+ *                 example: "12345678"
  *     responses:
  *       200:
  *         description: Login success
@@ -117,6 +154,9 @@ router.post("/login", upload.none(), async (req: Request, res: Response) => {
  * /api/auth/refresh:
  *   post:
  *     summary: Refresh access token
+ *     tags:
+ *       - Auth
+ *     security: []
  *     responses:
  *       200:
  *         description: New access token
@@ -155,6 +195,8 @@ router.post("/refresh", async (req: Request, res: Response) => {
  * /api/auth/logout:
  *   post:
  *     summary: Logout user
+ *     tags:
+ *       - Auth
  *     responses:
  *       204:
  *         description: Logged out

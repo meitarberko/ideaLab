@@ -20,11 +20,24 @@ function isValidObjectId(id: string) {
  * /api/ideas/{id}/comments:
  *   post:
  *     summary: Add comment
+ *     tags:
+ *       - Comments
  *     parameters:
  *       - in: path
  *         name: id
  *         schema:
  *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [text]
+ *             properties:
+ *               text:
+ *                 type: string
+ *                 example: "Nice idea!"
  *     responses:
  *       201:
  *         description: Comment created
@@ -65,6 +78,8 @@ router.post("/", requireAuth, async (req: Request, res) => {
  * /api/ideas/{id}/comments:
  *   get:
  *     summary: Get comments (cursor paging)
+ *     tags:
+ *       - Comments
  *     parameters:
  *       - in: path
  *         name: id
