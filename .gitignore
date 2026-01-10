@@ -40,18 +40,16 @@ jspm_packages/
 # =========================
 # Build outputs
 # =========================
-# Server build
-server/dist
-dist
-
-# Client build (Vite)
-client/dist
+dist/
+server/dist/
+client/dist/
 **/dist
 
 # =========================
 # Vite cache
 # =========================
-client/node_modules/.vite
+.vite/
+client/.vite/
 **/.vite
 vite.config.*.timestamp-*
 
@@ -61,6 +59,10 @@ vite.config.*.timestamp-*
 coverage/
 .nyc_output/
 junit.xml
+
+# Jest artifacts
+jest-cache/
+**/.jest
 
 # =========================
 # Runtime / Process managers
@@ -72,15 +74,15 @@ pids
 pm2*.log
 
 # =========================
-# Docker
+# Docker / Local infra
 # =========================
-**/*.local
+*.local
 docker-data/
 docker/mongo-data/
 mongo-data/
 
 # =========================
-# Nginx / SSL (do not commit certs/keys)
+# Nginx / SSL (never commit certs)
 # =========================
 nginx/*.key
 nginx/*.pem
@@ -91,23 +93,22 @@ letsencrypt/
 acme.json
 
 # =========================
-# Uploads (user uploaded images) - DO NOT COMMIT
+# Uploads (user content - DO NOT COMMIT)
 # =========================
 uploads/
 server/uploads/
 client/uploads/
 
-# Keep placeholder files if you add them
+# Keep empty folders if needed
 !uploads/.gitkeep
 !server/uploads/.gitkeep
 !client/uploads/.gitkeep
 
-
 # =========================
-# Misc
+# Caches / Tooling
 # =========================
-*.tgz
 .cache/
 .parcel-cache/
 .eslintcache
 .stylelintcache
+.prettiercache
