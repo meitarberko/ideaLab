@@ -4,6 +4,7 @@ import { User } from "../models/User";
 import { makeUploader, buildPublicUploadUrl } from "../lib/uploads";
 import { z } from "zod";
 import path from "path";
+import mongoose from "mongoose";
 
 const router = Router();
 const uploadAvatar = makeUploader("avatars");
@@ -42,9 +43,24 @@ router.patch("/me", requireAuth, uploadAvatar.single("avatar"), async (req: Auth
 });
 
 router.get("/:id", async (req, res) => {
-  const user = await User.findById(req.params.id).lean();
-  if (!user) return res.status(404).json({ message: "Not found" });
-  res.json({ id: String(user._id), username: user.username, email: user.email, avatarUrl: user.avatarUrl });
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid user id" });
+  }
+
+  const user = await User.findById(id).lean();
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  res.json({
+    id: String(user._id),
+    username: user.username,
+    email: user.email,
+    avatarUrl: user.avatarUrl
+  });
 });
 
 export default router;
