@@ -1,52 +1,62 @@
-import { Link } from "react-router-dom";
+// import React from "react";
+import { useNavigate } from "react-router-dom";
+import Avatar from "./Avatar";
+import Button from "./Button";
+import type { IdeaFeedItem } from "../types";
+import { useAuth } from "../lib/auth";
 
-type IdeaCardProps = {
-  id: string;
-  text: string;
-  imageUrl?: string;
-  createdAt: string;
-  likesCount?: number;
-  commentsCount?: number;
-  onEdit?: (id: string) => void;
-};
-
-export function IdeaCard({
-  id,
-  text,
-  imageUrl,
-  createdAt,
-  likesCount = 0,
-  commentsCount = 0,
+export default function IdeaCard({
+  idea,
+  author,
+  canEdit,
   onEdit,
-}: IdeaCardProps) {
-  return (
-    <div style={{ border: "1px solid #ddd", borderRadius: 12, padding: 12 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-        <Link to={`/ideas/${id}`} style={{ textDecoration: "none", color: "inherit" }}>
-          <div style={{ fontSize: 14, opacity: 0.7 }}>
-            {new Date(createdAt).toLocaleString()}
-          </div>
-          <div style={{ marginTop: 6, whiteSpace: "pre-wrap" }}>{text}</div>
-        </Link>
+  onDelete
+}: {
+  idea: IdeaFeedItem;
+  author: { id: string; username: string; avatarUrl?: string };
+  canEdit: boolean;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const nav = useNavigate();
+  const { user } = useAuth();
 
-        {onEdit ? (
-          <button onClick={() => onEdit(id)} style={{ height: 36 }}>
-            Edit
-          </button>
-        ) : null}
+  const short = idea.text.length > 220 ? idea.text.slice(0, 220) + "..." : idea.text;
+
+  return (
+    <div className="card" style={{ padding: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", cursor: "pointer" }} onClick={() => nav(`/profile/${author.id}`)}>
+          <Avatar url={author.avatarUrl} size={42} />
+          <div>
+            <div style={{ fontWeight: 900 }}>{author.username}</div>
+            <div style={{ fontSize: 12, color: "rgba(0,0,0,0.6)" }}>{new Date(idea.createdAt).toLocaleString()}</div>
+          </div>
+        </div>
+
+        {canEdit && (
+          <div style={{ display: "flex", gap: 8 }}>
+            <Button variant="secondary" onClick={onEdit}>Edit</Button>
+            <Button variant="danger" onClick={onDelete}>Delete</Button>
+          </div>
+        )}
       </div>
 
-      {imageUrl ? (
-        <img
-          src={imageUrl}
-          alt="idea"
-          style={{ width: "100%", marginTop: 10, borderRadius: 10, objectFit: "cover" }}
-        />
-      ) : null}
+      <div style={{ marginTop: 12, whiteSpace: "pre-wrap", lineHeight: 1.5 }}>{short}</div>
 
-      <div style={{ marginTop: 10, display: "flex", gap: 12, opacity: 0.8 }}>
-        <span>❤️ {likesCount}</span>
-        <span>💬 {commentsCount}</span>
+      {idea.imageUrl && (
+        <img
+          src={idea.imageUrl}
+          style={{ width: "100%", marginTop: 12, borderRadius: 12, border: "1px solid rgba(0,0,0,0.06)" }}
+        />
+      )}
+
+      <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 14, color: "rgba(0,0,0,0.7)", fontWeight: 800 }}>
+          <div>Likes: {idea.likesCount}</div>
+          <div>Comments: {idea.commentsCount}</div>
+        </div>
+        <Button variant="primary" onClick={() => nav(`/ideas/${idea.id}`)}>View</Button>
       </div>
     </div>
   );
