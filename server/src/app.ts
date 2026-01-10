@@ -3,9 +3,13 @@ import path from "path";
 import apiRouter from "./routes";
 import notFound from "./middleware/notFound";
 import errorHandler from "./middleware/errorHandler";
+import cookieParser from "cookie-parser";
 
 const app = express();
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 const uploadsDir = process.env.UPLOADS_DIR || path.join(process.cwd(), "uploads");
 console.log("check:", typeof apiRouter, typeof notFound, typeof errorHandler);
