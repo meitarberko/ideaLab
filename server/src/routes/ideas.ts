@@ -25,6 +25,17 @@ router.use("/:id/analyze", analyzeRouter);
 router.use("/:id/likes", likesRouter);
 router.use("/:id/comments", commentsRouter);
 
+/**
+ * @openapi
+ * /api/ideas:
+ *   post:
+ *     summary: Create idea
+ *     responses:
+ *       201:
+ *         description: Idea created
+ *       400:
+ *         description: Validation error
+ */
 router.post(
   "/",
   requireAuth,
@@ -52,6 +63,24 @@ router.post(
   }
 );
 
+/**
+ * @openapi
+ * /api/ideas:
+ *   get:
+ *     summary: Get ideas feed (cursor paging)
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: cursor
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Feed items
+ */
 router.get("/", async (req, res) => {
   const limit = Math.min(Number(req.query.limit || 10), 30);
   const cursor = req.query.cursor ? new Date(String(req.query.cursor)) : null;
@@ -92,6 +121,24 @@ router.get("/", async (req, res) => {
   });
 });
 
+/**
+ * @openapi
+ * /api/ideas/mine:
+ *   get:
+ *     summary: Get my ideas (cursor paging)
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: cursor
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User ideas
+ */
 router.get("/mine", requireAuth, async (req: Request, res: Response) => {
   const authed = req as AuthedRequest;
   const limit = Math.min(Number(req.query.limit || 10), 30);
@@ -116,6 +163,22 @@ router.get("/mine", requireAuth, async (req: Request, res: Response) => {
   });
 });
 
+/**
+ * @openapi
+ * /api/ideas/{id}:
+ *   get:
+ *     summary: Get idea by id
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Idea
+ *       404:
+ *         description: Not found
+ */
 router.get("/:id", validateParams(ideaIdParamsSchema), async (req, res) => {
   const idea = await Idea.findById(req.params.id).lean();
   if (!idea) return res.status(404).json({ message: "id doesnt exist" });
@@ -140,6 +203,26 @@ const updateSchema = z.object({
   removeImage: z.string().optional()
 });
 
+/**
+ * @openapi
+ * /api/ideas/{id}:
+ *   patch:
+ *     summary: Update idea
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Idea updated
+ *       400:
+ *         description: Validation error
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ */
 router.patch(
   "/:id",
   validateParams(ideaIdParamsSchema),
@@ -169,6 +252,24 @@ router.patch(
   }
 );
 
+/**
+ * @openapi
+ * /api/ideas/{id}:
+ *   delete:
+ *     summary: Delete idea
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: Idea deleted
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ */
 router.delete("/:id", validateParams(ideaIdParamsSchema), requireAuth, async (req: Request, res: Response) => {
   const authed = req as AuthedRequest;
   const idea = await Idea.findById(req.params.id);

@@ -4,8 +4,26 @@ import { setRefreshCookie } from "../lib/cookies";
 
 const router = Router();
 
+/**
+ * @openapi
+ * /api/auth/google:
+ *   get:
+ *     summary: Start Google OAuth
+ *     responses:
+ *       302:
+ *         description: Redirect
+ */
 router.get("/google", passport.authenticate("google", { scope: ["profile", "email"], session: false }));
 
+/**
+ * @openapi
+ * /api/auth/google/callback:
+ *   get:
+ *     summary: Google OAuth callback
+ *     responses:
+ *       302:
+ *         description: Redirect
+ */
 router.get(
   "/google/callback",
   passport.authenticate("google", { session: false, failureRedirect: `${process.env.FRONTEND_URL || "/"}login` }),
