@@ -43,10 +43,8 @@ const swaggerSpec = swaggerJSDoc({
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 const uploadsDir = process.env.UPLOADS_DIR || path.join(process.cwd(), "uploads");
-console.log("check:", typeof apiRouter, typeof notFound, typeof errorHandler);
 
 app.use("/uploads", express.static(uploadsDir));
-console.log("check:", typeof apiRouter, typeof notFound, typeof errorHandler);
 
 app.use("/api", apiRouter);
 
