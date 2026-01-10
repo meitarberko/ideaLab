@@ -5,6 +5,7 @@ import usersRouter from "./users";
 import ideasRouter from "./ideas";
 import commentsRoot from "./commentsRoot";
 import swaggerRouter from "./swagger";
+import authGoogleRouter from "./authGoogle";
 
 
 dotenv.config();
@@ -15,6 +16,7 @@ apiRouter.get("/health", (req, res) => {
 });
 
 apiRouter.use("/auth", authRouter);
+apiRouter.use("/auth", authGoogleRouter);
 apiRouter.use("/users", usersRouter);
 apiRouter.use("/ideas", ideasRouter);
 apiRouter.use("/comments", commentsRoot);

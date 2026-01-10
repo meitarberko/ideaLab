@@ -1,5 +1,3 @@
-import React from "react";
-
 export function LoadingState({ text }: { text?: string }) {
   return (
     <div className="card" style={{ padding: 18 }}>

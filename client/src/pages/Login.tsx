@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { Button } from "../components/Button";
 import Input from "../components/Input";
+
 
 export default function Login() {
   const { setSession } = useAuth();
@@ -10,6 +11,17 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+  const url = new URL(window.location.href);
+  const token = url.searchParams.get("token");
+  if (token) {
+    localStorage.setItem("accessToken", token);
+    window.history.replaceState({}, "", "/feed");
+    window.location.href = "/feed";
+  }
+}, []);
+
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();

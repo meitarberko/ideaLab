@@ -4,8 +4,13 @@ import apiRouter from "./routes";
 import notFound from "./middleware/notFound";
 import errorHandler from "./middleware/errorHandler";
 import cookieParser from "cookie-parser";
+import passport from "passport";
+import { setupPassport } from "./lib/passport";
 
 const app = express();
+
+setupPassport();
+app.use(passport.initialize());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
