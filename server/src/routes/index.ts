@@ -3,6 +3,7 @@ import { Router } from "express";
 import authRouter from "./auth";
 import usersRouter from "./users";
 import ideasRouter from "./ideas";
+import commentsRoot from "./commentsRoot";
 
 
 dotenv.config();
@@ -15,6 +16,7 @@ apiRouter.get("/health", (req, res) => {
 apiRouter.use("/auth", authRouter);
 apiRouter.use("/users", usersRouter);
 apiRouter.use("/ideas", ideasRouter);
+apiRouter.use("/comments", commentsRoot);
 
 
 export default apiRouter;
