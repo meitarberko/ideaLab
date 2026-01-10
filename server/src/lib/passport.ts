@@ -4,9 +4,16 @@ import { User } from "../models/User";
 import { signAccessToken, signRefreshToken, hashToken } from "./tokens";
 
 export function setupPassport() {
-  const clientID = process.env.GOOGLE_CLIENT_ID || "";
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET || "";
-  const callbackURL = process.env.GOOGLE_CALLBACK_URL || "";
+  const clientID = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const callbackURL = process.env.GOOGLE_CALLBACK_URL;
+
+  if (!clientID || !clientSecret || !callbackURL) {
+    console.warn(
+      "Google OAuth disabled: missing GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / GOOGLE_CALLBACK_URL"
+    );
+    return;
+  }
 
   passport.use(
     new GoogleStrategy(
@@ -14,13 +21,20 @@ export function setupPassport() {
       async (accessToken, refreshToken, profile, done) => {
         try {
           const googleId = profile.id;
-          const email = profile.emails?.[0]?.value || `${googleId}@google.local`;
-          const username = (profile.displayName || email.split("@")[0]).replace(/\s+/g, "").slice(0, 24) || `user${googleId.slice(0, 6)}`;
+          const email =
+            profile.emails?.[0]?.value || `${googleId}@google.local`;
+          const username =
+            (profile.displayName || email.split("@")[0])
+              .replace(/\s+/g, "")
+              .slice(0, 24) || `user${googleId.slice(0, 6)}`;
 
           let user = await User.findOne({ googleId });
           if (!user) {
             const taken = await User.findOne({ username }).lean();
-            const finalUsername = taken ? `${username}${Math.floor(Math.random() * 999)}` : username;
+            const finalUsername = taken
+              ? `${username}${Math.floor(Math.random() * 999)}`
+              : username;
+
             user = await User.create({
               username: finalUsername,
               email,
@@ -34,7 +48,10 @@ export function setupPassport() {
           const newAccess = signAccessToken(payload);
           const newRefresh = signRefreshToken(payload);
 
-          user.refreshTokenHashes = [hashToken(newRefresh), ...user.refreshTokenHashes].slice(0, 10);
+          user.refreshTokenHashes = [
+            hashToken(newRefresh),
+            ...user.refreshTokenHashes
+          ].slice(0, 10);
           await user.save();
 
           (done as any)(null, { accessToken: newAccess, refreshToken: newRefresh, user });
