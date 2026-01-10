@@ -15,7 +15,8 @@ function isValidObjectId(id: string) {
   return Types.ObjectId.isValid(id);
 }
 
-router.post("/", requireAuth, async (req: AuthedRequest, res) => {
+router.post("/", requireAuth, async (req: Request, res) => {
+  const authed = req as AuthedRequest;
   const ideaId = String(req.params.id || "");
   if (!isValidObjectId(ideaId)) {
     return res.status(400).json({ message: "Invalid idea id" });
@@ -34,7 +35,7 @@ router.post("/", requireAuth, async (req: AuthedRequest, res) => {
 
   const comment = await Comment.create({
     ideaId,
-    authorId: req.user!.userId,
+    authorId: authed.user!.userId,
     text: parsed.data.text
   });
 

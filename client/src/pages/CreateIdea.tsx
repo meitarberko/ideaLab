@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import TopBar from "../components/TopBar";
 import { Button } from "../components/Button";
 import Input from "../components/Input";

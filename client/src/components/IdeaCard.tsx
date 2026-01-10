@@ -1,7 +1,7 @@
 // import React from "react";
 import { useNavigate } from "react-router-dom";
 import Avatar from "./Avatar";
-import Button from "./Button";
+import { Button } from "./Button";
 import type { IdeaFeedItem } from "../types";
 import { useAuth } from "../lib/auth";
 
