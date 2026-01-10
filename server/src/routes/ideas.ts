@@ -9,11 +9,12 @@ import path from "path";
 import { requireFile } from "../middleware/requireFile";
 import { validateBody } from "../middleware/validate";
 import { createIdeaBodySchema } from "../schemas/ideasSchemas";
-
+import analyzeRouter from "./analyze";
 
 
 const router = Router();
 const uploadIdeaImage = makeUploader("ideas");
+router.use("/:id/analyze", analyzeRouter);
 
 router.post("/", requireAuth, uploadIdeaImage.single("image"),
   requireFile("image"), validateBody(createIdeaBodySchema), async (req: any, res) => {
