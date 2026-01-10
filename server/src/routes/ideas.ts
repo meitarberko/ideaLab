@@ -154,4 +154,7 @@ router.delete("/:id", requireAuth, async (req: AuthedRequest, res) => {
   res.status(204).send();
 });
 
+import likesRouter from "./likes";
+router.use("/:id/likes", (req, res, next) => { next(); }, likesRouter);
+
 export default router;
