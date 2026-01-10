@@ -3,6 +3,7 @@ import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { Button } from "../components/Button";
 import Input from "../components/Input";
+import LabIcon from "../images/LabIcon.png"; 
 
 
 export default function Login() {
@@ -41,7 +42,7 @@ export default function Login() {
     <div className="container">
       <div className="card" style={{ padding: 24, maxWidth: 520, margin: "0 auto" }}>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <img src="/images/IdeaLabLogo.png" style={{ height: 44 }} />
+          <img src={LabIcon} style={{ height: 100 }} />
           <div>
             <div style={{ fontWeight: 800, fontSize: 20 }}>IdeaLab</div>
             <div style={{ fontSize: 13, color: "rgba(0,0,0,0.6)" }}>A laboratory for early stage ideas.</div>

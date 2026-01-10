@@ -49,20 +49,42 @@ export default function Register() {
             <Input value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div>
-            <div className="label">Password (min 5)</div>
+            <div className="label">Password (minimum 5 chars)</div>
             <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
 
           <div>
             <div className="label">Avatar (optional)</div>
-            <Input type="file" accept="image/*" onChange={(e) => setAvatar(e.target.files?.[0] || null)} />
-            {avatar && (
-              <div style={{ marginTop: 8, display: "flex", gap: 12, alignItems: "center" }}>
-                <div style={{ fontWeight: 700 }}>{avatar.name}</div>
-                <Button variant="secondary" type="button" onClick={() => setAvatar(null)}>Remove</Button>
+
+            <input
+              id="avatar"
+              type="file"
+              accept="image/*"
+              className="file-hidden"
+              onChange={(e) => setAvatar(e.target.files?.[0] || null)}
+            />
+
+            <div className="file-row">
+              <label htmlFor="avatar" className="btn btn-secondary">
+                Choose file
+              </label>
+
+              <div className="file-name">
+                {avatar ? avatar.name : "No file chosen"}
               </div>
-            )}
+
+              {avatar && (
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => setAvatar(null)}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
           </div>
+
 
           {err && <div style={{ color: "var(--danger)", fontWeight: 700 }}>{err}</div>}
 

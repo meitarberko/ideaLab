@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, PropsWithChildren } from "react";
 
-type ButtonVariant = "primary" | "secondary" | "ghost";
+type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 
 export type ButtonProps = PropsWithChildren<
   ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -14,23 +14,27 @@ export function Button({
   variant = "primary",
   disabled,
   children,
+  className,
   ...rest
 }: ButtonProps) {
-  const base =
-    "px-4 py-2 rounded-lg border transition disabled:opacity-60 disabled:cursor-not-allowed";
+  const base = "btn";
   const variants: Record<ButtonVariant, string> = {
-    primary: "bg-black text-white border-black",
-    secondary: "bg-white text-black border-gray-300",
-    ghost: "bg-transparent text-black border-transparent",
+    primary: "btn-primary",
+    secondary: "btn-secondary",
+    ghost: "btn-ghost",
+    danger: "btn-danger"
   };
 
   return (
     <button
       {...rest}
       disabled={disabled || loading}
-      className={[base, variants[variant], rest.className].filter(Boolean).join(" ")}
+      className={[base, variants[variant], className].filter(Boolean).join(" ")}
     >
-      {loading ? "Loading..." : children}
+      <span className="btn-inner">
+        {loading ? <span className="btn-spinner" aria-hidden="true" /> : null}
+        <span>{loading ? "Loading..." : children}</span>
+      </span>
     </button>
   );
 }
