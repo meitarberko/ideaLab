@@ -1,6 +1,6 @@
-import React from "react";
+// import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "./Button";
+import Button from "./Button";
 import Avatar from "./Avatar";
 import { useAuth } from "../lib/auth";
 
