@@ -15,6 +15,37 @@ function isValidObjectId(id: string) {
   return Types.ObjectId.isValid(id);
 }
 
+/**
+ * @openapi
+ * /api/ideas/{id}/comments:
+ *   post:
+ *     summary: Add comment
+ *     tags:
+ *       - Comments
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [text]
+ *             properties:
+ *               text:
+ *                 type: string
+ *                 example: "Nice idea!"
+ *     responses:
+ *       201:
+ *         description: Comment created
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: Not found
+ */
 router.post("/", requireAuth, async (req: Request, res) => {
   const authed = req as AuthedRequest;
   const ideaId = String(req.params.id || "");
@@ -42,6 +73,32 @@ router.post("/", requireAuth, async (req: Request, res) => {
   res.status(201).json({ id: String(comment._id) });
 });
 
+/**
+ * @openapi
+ * /api/ideas/{id}/comments:
+ *   get:
+ *     summary: Get comments (cursor paging)
+ *     tags:
+ *       - Comments
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: cursor
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Comments
+ *       400:
+ *         description: Invalid id
+ */
 router.get(
   "/",
   async (

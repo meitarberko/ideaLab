@@ -25,6 +25,39 @@ const registerSchema = z.object({
   password: z.string().min(5, "Password must be at least 5 characters")
 });
 
+/**
+ * @openapi
+ * /api/auth/register:
+ *   post:
+ *     summary: Register user
+ *     tags:
+ *       - Auth
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [username, email, password]
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 example: johndoe
+ *               email:
+ *                 type: string
+ *                 example: john@example.com
+ *               password:
+ *                 type: string
+ *                 example: "12345678"
+ *     responses:
+ *       201:
+ *         description: User created
+ *       400:
+ *         description: Validation error
+ *       409:
+ *         description: Conflict
+ */
 router.post("/register", upload.none(), async (req: Request, res: Response) => {
   const parsed = registerSchema.safeParse(req.body);
   if (!parsed.success) return sendZodError(res, parsed.error);
@@ -59,6 +92,36 @@ const loginSchema = z.object({
   password: z.string().min(5, "Password must be at least 5 characters")
 });
 
+/**
+ * @openapi
+ * /api/auth/login:
+ *   post:
+ *     summary: Login user
+ *     tags:
+ *       - Auth
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [username, password]
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 example: johndoe
+ *               password:
+ *                 type: string
+ *                 example: "12345678"
+ *     responses:
+ *       200:
+ *         description: Login success
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ */
 router.post("/login", upload.none(), async (req: Request, res: Response) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) return sendZodError(res, parsed.error);
@@ -86,6 +149,20 @@ router.post("/login", upload.none(), async (req: Request, res: Response) => {
   });
 });
 
+/**
+ * @openapi
+ * /api/auth/refresh:
+ *   post:
+ *     summary: Refresh access token
+ *     tags:
+ *       - Auth
+ *     security: []
+ *     responses:
+ *       200:
+ *         description: New access token
+ *       401:
+ *         description: Unauthorized
+ */
 router.post("/refresh", async (req: Request, res: Response) => {
   const token = req.cookies?.refreshToken;
   if (!token) return res.status(401).json({ message: "Unauthorized" });
@@ -113,6 +190,17 @@ router.post("/refresh", async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * @openapi
+ * /api/auth/logout:
+ *   post:
+ *     summary: Logout user
+ *     tags:
+ *       - Auth
+ *     responses:
+ *       204:
+ *         description: Logged out
+ */
 router.post("/logout", async (req: Request, res: Response) => {
   const token = req.cookies?.refreshToken;
 

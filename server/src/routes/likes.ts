@@ -6,6 +6,28 @@ import mongoose from "mongoose";
 
 const router = Router({ mergeParams: true });
 
+/**
+ * @openapi
+ * /api/ideas/{id}/likes:
+ *   post:
+ *     summary: Like idea
+ *     tags:
+ *       - Likes
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *     responses:
+ *       201:
+ *         description: Like created
+ *       204:
+ *         description: Already liked
+ *       400:
+ *         description: Invalid id
+ *       404:
+ *         description: Not found
+ */
 router.post("/", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const { id } = req.params;
@@ -24,6 +46,26 @@ router.post("/", requireAuth, async (req: AuthedRequest, res, next) => {
   }
 });
 
+/**
+ * @openapi
+ * /api/ideas/{id}/likes:
+ *   delete:
+ *     summary: Remove like
+ *     tags:
+ *       - Likes
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: Like removed
+ *       400:
+ *         description: Invalid id
+ *       404:
+ *         description: Not found
+ */
 router.delete("/", requireAuth, async (req: AuthedRequest, res) => {
   const { id } = req.params;
   if (!mongoose.Types.ObjectId.isValid(id)) {

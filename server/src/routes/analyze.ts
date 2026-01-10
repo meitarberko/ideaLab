@@ -46,6 +46,32 @@ User Question: """${question || "General analysis requested"}"""
 `.trim();
 }
 
+/**
+ * @openapi
+ * /api/ideas/{id}/analyze:
+ *   post:
+ *     summary: Analyze idea
+ *     tags:
+ *       - Analyze
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Analysis result
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: Not found
+ *       429:
+ *         description: Rate limited
+ *       502:
+ *         description: Invalid AI response
+ *       500:
+ *         description: Server error
+ */
 router.post("/", requireAuth, limiter, async (req: AuthedRequest, res) => {
   try {
     const parsed = bodySchema.safeParse(req.body);
