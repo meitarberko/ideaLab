@@ -31,16 +31,17 @@ router.post(
   "/",
   requireAuth,
   uploadIdeaImage.single("image"),
-  requireFile("image"),
   requireText,
   validateBody(createIdeaBodySchema),
   async (req: any, res) => {
-    console.log("requireFile type:", typeof requireFile);
-
     const { text } = req.validatedBody;
 
-    const filename = path.basename(req.file.path);
-    const imageUrl = buildPublicUploadUrl("ideas", filename);
+    let imageUrl: string | undefined;
+
+    if (req.file) {
+      const filename = path.basename(req.file.path);
+      imageUrl = buildPublicUploadUrl("ideas", filename);
+    }
 
     const idea = await Idea.create({
       authorId: req.user!.userId,
@@ -51,6 +52,7 @@ router.post(
     res.status(201).json({ id: String(idea._id) });
   }
 );
+
 
 router.get("/", async (req, res) => {
   const limit = Math.min(Number(req.query.limit || 10), 30);

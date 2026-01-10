@@ -1,60 +1,73 @@
-import { useState } from "react";
+import React, { useState } from "react";
+import TopBar from "../components/TopBar";
+import { Button } from "../components/Button";
+import Input from "../components/Input";
+import { api } from "../lib/api";
 import { useNavigate } from "react-router-dom";
-import { apiFetch } from "../lib/api";
 
 export default function CreateIdea() {
   const nav = useNavigate();
   const [text, setText] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  const [image, setImage] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [err, setErr] = useState<string | null>(null);
 
-  async function submit() {
-    setError("");
-    if (!text.trim()) return setError("text is required");
-    if (!file) return setError("image is required");
-
-    const fd = new FormData();
-    fd.append("text", text.trim());
-    fd.append("image", file);
-
+  const submit = async () => {
+    setErr(null);
+    if (!text.trim()) return;
     setLoading(true);
-    const res = await apiFetch<{ id: string }>("/ideas", { method: "POST", body: fd });
-    setLoading(false);
+    try {
+      const fd = new FormData();
+      fd.append("text", text.trim());
+      if (image) fd.append("image", image);
 
-    if (!res.ok) return setError(res.error?.message || "Create failed");
-    nav(`/ideas/${res.data!.id}`);
-  }
+      const r = await api.post("/ideas", fd, { headers: { "Content-Type": "multipart/form-data" } });
+      nav(`/ideas/${r.data.id}`);
+    } catch {
+      setErr("Failed to publish");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", padding: 16 }}>
-      <h2>Create Idea</h2>
+    <>
+      <TopBar />
+      <div className="container">
+        <div className="card" style={{ padding: 18 }}>
+          <div style={{ fontWeight: 900, fontSize: 20 }}>New Idea</div>
 
-      {error ? <div style={{ color: "crimson", marginBottom: 10 }}>{error}</div> : null}
+          <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 12 }}>
+            <div>
+              <div className="label">Idea text</div>
+              <textarea
+                className="input"
+                style={{ minHeight: 140, resize: "vertical" }}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+              />
+            </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          rows={5}
-          placeholder="Write your idea..."
-        />
+            <div>
+              <div className="label">Image (optional)</div>
+              <Input type="file" accept="image/*" onChange={(e) => setImage(e.target.files?.[0] || null)} />
+              {image && (
+                <div style={{ marginTop: 8, display: "flex", gap: 10, alignItems: "center" }}>
+                  <div style={{ fontWeight: 800 }}>{image.name}</div>
+                  <Button variant="secondary" type="button" onClick={() => setImage(null)}>Remove</Button>
+                </div>
+              )}
+            </div>
 
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-        />
+            {err && <div style={{ fontWeight: 900, color: "var(--danger)" }}>{err}</div>}
 
-        <div style={{ display: "flex", gap: 10 }}>
-          <button onClick={() => nav(-1)} disabled={loading}>
-            Cancel
-          </button>
-          <button onClick={submit} disabled={loading}>
-            {loading ? "Creating..." : "Create"}
-          </button>
+            <div style={{ display: "flex", gap: 10 }}>
+              <Button loading={loading} disabled={!text.trim()} onClick={submit}>Publish</Button>
+              <Button variant="secondary" onClick={() => nav("/feed")}>Cancel</Button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
