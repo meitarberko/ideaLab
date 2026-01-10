@@ -1,25 +1,41 @@
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { z } from "zod";
+import multer from "multer";
 import { User } from "../models/User";
 import { clearRefreshCookie, setRefreshCookie } from "../lib/cookies";
 import { hashToken, signAccessToken, signRefreshToken, verifyRefreshToken } from "../lib/tokens";
 
 const router = Router();
+const upload = multer();
+
+function sendZodError(res: Response, error: z.ZodError) {
+  return res.status(400).json({
+    message: "Validation error",
+    errors: error.issues.map((i) => ({
+      field: i.path.join("."),
+      message: i.message
+    }))
+  });
+}
 
 const registerSchema = z.object({
-  username: z.string().min(1),
-  email: z.string().email(),
-  password: z.string().min(5)
+  username: z.string().trim().min(1, "Username is required"),
+  email: z.string().trim().toLowerCase().email("Invalid email"),
+  password: z.string().min(5, "Password must be at least 5 characters")
 });
 
-router.post("/register", async (req, res) => {
+router.post("/register", upload.none(), async (req: Request, res: Response) => {
   const parsed = registerSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ message: "Validation error" });
+  if (!parsed.success) return sendZodError(res, parsed.error);
 
   const { username, email, password } = parsed.data;
-  const exists = await User.findOne({ username }).lean();
-  if (exists) return res.status(409).json({ message: "Username already exists" });
+
+  const usernameExists = await User.findOne({ username }).lean();
+  if (usernameExists) return res.status(409).json({ message: "Username already exists" });
+
+  const emailExists = await User.findOne({ email }).lean();
+  if (emailExists) return res.status(409).json({ message: "Email already exists" });
 
   const passwordHash = await bcrypt.hash(password, 10);
   const user = await User.create({ username, email, passwordHash, provider: "local" });
@@ -27,6 +43,7 @@ router.post("/register", async (req, res) => {
   const payload = { userId: String(user._id), username: user.username };
   const accessToken = signAccessToken(payload);
   const refreshToken = signRefreshToken(payload);
+
   user.refreshTokenHashes = [hashToken(refreshToken)];
   await user.save();
 
@@ -38,15 +55,16 @@ router.post("/register", async (req, res) => {
 });
 
 const loginSchema = z.object({
-  username: z.string().min(1),
-  password: z.string().min(5)
+  username: z.string().trim().min(1, "Username is required"),
+  password: z.string().min(5, "Password must be at least 5 characters")
 });
 
-router.post("/login", async (req, res) => {
+router.post("/login", upload.none(), async (req: Request, res: Response) => {
   const parsed = loginSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ message: "Validation error" });
+  if (!parsed.success) return sendZodError(res, parsed.error);
 
   const { username, password } = parsed.data;
+
   const user = await User.findOne({ username });
   if (!user || !user.passwordHash) return res.status(401).json({ message: "Invalid credentials" });
 
@@ -68,8 +86,8 @@ router.post("/login", async (req, res) => {
   });
 });
 
-router.post("/refresh", async (req, res) => {
-  const token = req.cookies.refreshToken;
+router.post("/refresh", async (req: Request, res: Response) => {
+  const token = req.cookies?.refreshToken;
   if (!token) return res.status(401).json({ message: "Unauthorized" });
 
   try {
@@ -95,8 +113,9 @@ router.post("/refresh", async (req, res) => {
   }
 });
 
-router.post("/logout", async (req, res) => {
-  const token = req.cookies.refreshToken;
+router.post("/logout", async (req: Request, res: Response) => {
+  const token = req.cookies?.refreshToken;
+
   if (token) {
     try {
       const payload = verifyRefreshToken(token);
@@ -108,6 +127,7 @@ router.post("/logout", async (req, res) => {
       }
     } catch {}
   }
+
   clearRefreshCookie(res);
   res.status(204).send();
 });
