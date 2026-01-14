@@ -4,7 +4,7 @@ import TopBar from "../components/TopBar";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import Avatar from "../components/Avatar";
-import Button from "../components/Button";
+import { Button } from "../components/Button";
 import Modal from "../components/Modal";
 import { LoadingState, ErrorState, EmptyState } from "../components/State";
 
@@ -17,6 +17,7 @@ type Idea = {
   updatedAt: string;
   likesCount: number;
   commentsCount: number;
+  likedByMe?: boolean;
 };
 
 type UserMini = { id: string; username: string; avatarUrl?: string };
@@ -59,9 +60,12 @@ export default function IdeaDetails() {
     try {
       setError(false);
       setLoading(true);
+
       const r = await api.get(`/ideas/${id}`);
       const it: Idea = r.data;
+
       setIdea(it);
+      setLiked(!!it.likedByMe);
 
       const u = await api.get(`/users/${it.authorId}`);
       setAuthor(u.data);
@@ -92,6 +96,7 @@ export default function IdeaDetails() {
 
   const toggleLike = async () => {
     if (!idea) return;
+
     if (!liked) {
       await api.post(`/ideas/${idea.id}/likes`);
       setLiked(true);
@@ -107,6 +112,7 @@ export default function IdeaDetails() {
     if (!idea) return;
     const text = commentText.trim();
     if (!text) return;
+
     await api.post(`/ideas/${idea.id}/comments`, { text });
     setCommentText("");
     await loadComments();
@@ -139,7 +145,9 @@ export default function IdeaDetails() {
     return (
       <>
         <TopBar />
-        <div className="container"><LoadingState text="Loading idea..." /></div>
+        <div className="container">
+          <LoadingState text="Loading idea..." />
+        </div>
       </>
     );
   }
@@ -148,7 +156,9 @@ export default function IdeaDetails() {
     return (
       <>
         <TopBar />
-        <div className="container"><ErrorState title="Failed to load idea" /></div>
+        <div className="container">
+          <ErrorState title="Failed to load idea" />
+        </div>
       </>
     );
   }
@@ -159,16 +169,22 @@ export default function IdeaDetails() {
       <div className="container" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div className="card" style={{ padding: 16 }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-            <div style={{ display: "flex", gap: 10, alignItems: "center", cursor: "pointer" }} onClick={() => nav(`/profile/${author.id}`)}>
+            <div
+              style={{ display: "flex", gap: 10, alignItems: "center", cursor: "pointer" }}
+              onClick={() => nav(`/profile/${author.id}`)}
+            >
               <Avatar url={author.avatarUrl} size={44} />
               <div>
                 <div style={{ fontWeight: 900 }}>{author.username}</div>
                 <div style={{ fontSize: 12, color: "rgba(0,0,0,0.6)" }}>{new Date(idea.createdAt).toLocaleString()}</div>
               </div>
             </div>
+
             {canEdit && (
               <div style={{ display: "flex", gap: 8 }}>
-                <Button variant="secondary" onClick={() => nav(`/ideas/${idea.id}/edit`)}>Edit</Button>
+                <Button variant="secondary" onClick={() => nav(`/ideas/${idea.id}/edit`)}>
+                  Edit
+                </Button>
               </div>
             )}
           </div>
@@ -188,8 +204,12 @@ export default function IdeaDetails() {
               <div>Comments: {idea.commentsCount}</div>
             </div>
             <div style={{ display: "flex", gap: 10 }}>
-              <Button variant={liked ? "secondary" : "primary"} onClick={toggleLike}>{liked ? "Unlike" : "Like"}</Button>
-              <Button variant="primary" onClick={() => setAnalyzerOpen(true)}>IdeaLab Analyzer</Button>
+              <Button variant={liked ? "secondary" : "primary"} onClick={toggleLike}>
+                {liked ? "Unlike" : "Like"}
+              </Button>
+              <Button variant="primary" onClick={() => setAnalyzerOpen(true)}>
+                IdeaLab Analyzer
+              </Button>
             </div>
           </div>
         </div>
@@ -198,8 +218,15 @@ export default function IdeaDetails() {
           <div style={{ fontWeight: 900, fontSize: 18 }}>Comments</div>
 
           <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
-            <textarea className="input" style={{ minHeight: 90, resize: "vertical" }} value={commentText} onChange={(e) => setCommentText(e.target.value)} />
-            <Button disabled={!commentText.trim()} onClick={addComment}>Add Comment</Button>
+            <textarea
+              className="input"
+              style={{ minHeight: 90, resize: "vertical" }}
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+            />
+            <Button disabled={!commentText.trim()} onClick={addComment}>
+              Add Comment
+            </Button>
           </div>
 
           <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
@@ -209,9 +236,13 @@ export default function IdeaDetails() {
             {comments.map((c) => (
               <div key={c.id} className="card" style={{ padding: 12, background: "var(--bg)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                  <div style={{ fontSize: 12, color: "rgba(0,0,0,0.6)", fontWeight: 900 }}>{new Date(c.createdAt).toLocaleString()}</div>
+                  <div style={{ fontSize: 12, color: "rgba(0,0,0,0.6)", fontWeight: 900 }}>
+                    {new Date(c.createdAt).toLocaleString()}
+                  </div>
                   {c.authorId === user?.id && (
-                    <button className="btn btn-danger" onClick={() => deleteComment(c.id)}>Delete</button>
+                    <button className="btn btn-danger" onClick={() => deleteComment(c.id)}>
+                      Delete
+                    </button>
                   )}
                 </div>
                 <div style={{ marginTop: 8, whiteSpace: "pre-wrap" }}>{c.text}</div>
@@ -224,11 +255,18 @@ export default function IdeaDetails() {
       <Modal open={analyzerOpen} title="IdeaLab Analyzer" onClose={() => setAnalyzerOpen(false)}>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={{ fontWeight: 900 }}>Free question (optional)</div>
-          <textarea className="input" style={{ minHeight: 90, resize: "vertical" }} value={question} onChange={(e) => setQuestion(e.target.value)} />
+          <textarea
+            className="input"
+            style={{ minHeight: 90, resize: "vertical" }}
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+          />
 
           {analysisError && <div style={{ fontWeight: 900, color: "var(--danger)" }}>{analysisError}</div>}
 
-          <Button loading={analyzing} onClick={runAnalyze}>Analyze</Button>
+          <Button loading={analyzing} onClick={runAnalyze}>
+            Analyze
+          </Button>
 
           {analysis && (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -260,7 +298,9 @@ function Section({ title, items }: { title: string; items: string[] }) {
       <div style={{ fontWeight: 900 }}>{title}</div>
       <ul style={{ margin: "8px 0 0 18px" }}>
         {items.map((x, i) => (
-          <li key={i} style={{ marginBottom: 6 }}>{x}</li>
+          <li key={i} style={{ marginBottom: 6 }}>
+            {x}
+          </li>
         ))}
       </ul>
     </div>

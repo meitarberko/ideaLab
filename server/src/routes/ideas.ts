@@ -126,6 +126,7 @@ router.get("/", async (req, res) => {
   const nextCursor = ideas.length > limit ? items[items.length - 1].createdAt.toISOString() : null;
 
   const ideaIds = items.map((i) => i._id);
+
   const likesAgg = await Like.aggregate([
     { $match: { ideaId: { $in: ideaIds } } },
     { $group: { _id: "$ideaId", count: { $sum: 1 } } }
@@ -139,15 +140,25 @@ router.get("/", async (req, res) => {
   const likesMap = new Map<string, number>(likesAgg.map((x: any) => [String(x._id), x.count]));
   const commentsMap = new Map<string, number>(commentsAgg.map((x: any) => [String(x._id), x.count]));
 
+  const userId = (req as any).user?.id;
+  let likedSet = new Set<string>();
+
+  if (userId) {
+    const ids = items.map((d: any) => String(d._id));
+    const likes = await Like.find({ userId, ideaId: { $in: ids } }).select("ideaId").lean();
+    likedSet = new Set(likes.map((l: any) => String(l.ideaId)));
+  }
+
   res.json({
-    items: items.map((i) => ({
+    items: items.map((i: any) => ({
       id: String(i._id),
       authorId: String(i.authorId),
       text: i.text,
       imageUrl: i.imageUrl,
       createdAt: i.createdAt,
       likesCount: likesMap.get(String(i._id)) || 0,
-      commentsCount: commentsMap.get(String(i._id)) || 0
+      commentsCount: commentsMap.get(String(i._id)) || 0,
+      likedByMe: userId ? likedSet.has(String(i._id)) : false
     })),
     nextCursor
   });
@@ -191,7 +202,7 @@ router.get("/mine", requireAuth, async (req: Request, res: Response) => {
   const nextCursor = ideas.length > limit ? items[items.length - 1].createdAt.toISOString() : null;
 
   res.json({
-    items: items.map((i) => ({
+    items: items.map((i: any) => ({
       id: String(i._id),
       authorId: String(i.authorId),
       text: i.text,
@@ -227,6 +238,12 @@ router.get("/:id", validateParams(ideaIdParamsSchema), async (req, res) => {
   const likesCount = await Like.countDocuments({ ideaId: idea._id });
   const commentsCount = await Comment.countDocuments({ ideaId: idea._id });
 
+  let likedByMe = false;
+  if ((req as any).user?.id) {
+    const exists = await Like.findOne({ ideaId: idea._id, userId: (req as any).user.id }).lean();
+    likedByMe = !!exists;
+  }
+
   res.json({
     id: String(idea._id),
     authorId: String(idea.authorId),
@@ -235,7 +252,8 @@ router.get("/:id", validateParams(ideaIdParamsSchema), async (req, res) => {
     createdAt: idea.createdAt,
     updatedAt: idea.updatedAt,
     likesCount,
-    commentsCount
+    commentsCount,
+    likedByMe
   });
 });
 
