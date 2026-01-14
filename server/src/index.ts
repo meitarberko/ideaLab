@@ -5,7 +5,7 @@ dotenv.config({ path: path.resolve(__dirname, "../.env") });
 import app from "./app";
 import connectMongo from "./mongo";
 
-const port = Number(process.env.PORT || 3001);
+const port = Number(process.env.PORT || 3000);
 
 async function start() {
   await connectMongo();

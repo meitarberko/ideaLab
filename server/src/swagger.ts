@@ -56,7 +56,7 @@ export const swaggerSpec = swaggerJSDoc({
       }
     },
     security: [{ bearerAuth: [] }],
-    servers: [{ url: "/api" }]
+    servers: [{ url: "http://localhost:3001" }]
   },
   apis: ["src/routes/*.ts"]
 });

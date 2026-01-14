@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 import { z } from "zod";
 import multer from "multer";
@@ -8,6 +8,15 @@ import { hashToken, signAccessToken, signRefreshToken, verifyRefreshToken } from
 
 const router = Router();
 const upload = multer();
+
+
+function parseMultipartIfNeeded(req: Request, res: Response, next: NextFunction) {
+  const ct = req.headers["content-type"] || "";
+  if (typeof ct === "string" && ct.includes("multipart/form-data")) {
+    return upload.none()(req, res, next);
+  }
+  return next();
+}
 
 function sendZodError(res: Response, error: z.ZodError) {
   return res.status(400).json({
@@ -41,15 +50,17 @@ const registerSchema = z.object({
  *             type: object
  *             required: [username, email, password]
  *             properties:
- *               username:
- *                 type: string
- *                 example: johndoe
- *               email:
- *                 type: string
- *                 example: john@example.com
- *               password:
- *                 type: string
- *                 example: "12345678"
+ *               username: { type: string, example: johndoe }
+ *               email: { type: string, example: john@example.com }
+ *               password: { type: string, example: "12345678" }
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [username, email, password]
+ *             properties:
+ *               username: { type: string, example: johndoe }
+ *               email: { type: string, example: john@example.com }
+ *               password: { type: string, example: "12345678" }
  *     responses:
  *       201:
  *         description: User created
@@ -58,7 +69,7 @@ const registerSchema = z.object({
  *       409:
  *         description: Conflict
  */
-router.post("/register", upload.none(), async (req: Request, res: Response) => {
+router.post("/register", parseMultipartIfNeeded, async (req: Request, res: Response) => {
   const parsed = registerSchema.safeParse(req.body);
   if (!parsed.success) return sendZodError(res, parsed.error);
 
@@ -108,12 +119,15 @@ const loginSchema = z.object({
  *             type: object
  *             required: [username, password]
  *             properties:
- *               username:
- *                 type: string
- *                 example: johndoe
- *               password:
- *                 type: string
- *                 example: "12345678"
+ *               username: { type: string, example: johndoe }
+ *               password: { type: string, example: "12345678" }
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [username, password]
+ *             properties:
+ *               username: { type: string, example: johndoe }
+ *               password: { type: string, example: "12345678" }
  *     responses:
  *       200:
  *         description: Login success
@@ -122,7 +136,7 @@ const loginSchema = z.object({
  *       401:
  *         description: Unauthorized
  */
-router.post("/login", upload.none(), async (req: Request, res: Response) => {
+router.post("/login", parseMultipartIfNeeded, async (req: Request, res: Response) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) return sendZodError(res, parsed.error);
 
@@ -164,7 +178,7 @@ router.post("/login", upload.none(), async (req: Request, res: Response) => {
  *         description: Unauthorized
  */
 router.post("/refresh", async (req: Request, res: Response) => {
-  const token = req.cookies?.refreshToken;
+  const token = (req as any).cookies?.refreshToken;
   if (!token) return res.status(401).json({ message: "Unauthorized" });
 
   try {
@@ -202,7 +216,7 @@ router.post("/refresh", async (req: Request, res: Response) => {
  *         description: Logged out
  */
 router.post("/logout", async (req: Request, res: Response) => {
-  const token = req.cookies?.refreshToken;
+  const token = (req as any).cookies?.refreshToken;
 
   if (token) {
     try {
