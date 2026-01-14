@@ -6,6 +6,7 @@ import notFound from "./middleware/notFound";
 import errorHandler from "./middleware/errorHandler";
 import cookieParser from "cookie-parser";
 import passport from "passport";
+import cors from "cors";
 import { setupPassport } from "./lib/passport";
 import swaggerUi from "swagger-ui-express";
 import swaggerJSDoc from "swagger-jsdoc";
@@ -14,6 +15,17 @@ const app = express();
 
 setupPassport();
 app.use(passport.initialize());
+
+const allowedOrigins = ["http://localhost:3000", "http://localhost:5173"];
+app.use(
+  cors({
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true
+  })
+);
+app.options(/.*/, cors({ origin: allowedOrigins, credentials: true }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -35,7 +47,8 @@ const swaggerSpec = swaggerJSDoc({
         }
       }
     },
-    security: [{ bearerAuth: [] }]
+    security: [{ bearerAuth: [] }],
+    servers: [{ url: "http://localhost:3000" }]
   },
   apis: ["./src/routes/**/*.ts"]
 });
