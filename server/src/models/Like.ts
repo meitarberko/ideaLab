@@ -15,6 +15,6 @@ const likeSchema = new Schema<LikeDoc>(
   { timestamps: { createdAt: true, updatedAt: false } }
 );
 
-likeSchema.index({ userId: 1, ideaId: 1 }, { unique: true });
+likeSchema.index({ ideaId: 1, userId: 1 }, { unique: true });
 
 export const Like = model<LikeDoc>("Like", likeSchema);

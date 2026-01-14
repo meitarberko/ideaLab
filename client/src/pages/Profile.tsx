@@ -41,22 +41,15 @@ export default function Profile({ mode }: { mode: "me" | "user" }) {
       if (kind === "init") setLoading(true);
       if (kind === "more") setLoadingMore(true);
 
-      if (mode === "me") {
-        const r = await api.get("/ideas/mine", { params: { limit: 10, cursor: kind === "more" ? cursor : undefined } });
-        const newItems: IdeaFeedItem[] = r.data.items.map((x: any) => ({
-          ...x,
-          likesCount: 0,
-          commentsCount: 0
-        }));
-        setIdeas((prev) => (kind === "init" ? newItems : [...prev, ...newItems]));
-        setCursor(r.data.nextCursor);
-      } else {
-        const r = await api.get("/ideas", { params: { limit: 10, cursor: kind === "more" ? cursor : undefined } });
-        const all: IdeaFeedItem[] = r.data.items;
-        const mine = all.filter((x) => x.authorId === userId);
-        setIdeas((prev) => (kind === "init" ? mine : [...prev, ...mine]));
-        setCursor(r.data.nextCursor);
-      }
+      const c = kind === "more" ? cursor : undefined;
+
+      const r =
+        mode === "me"
+          ? await api.get("/ideas/mine", { params: { limit: 10, cursor: c } })
+          : await api.get(`/users/${userId}/ideas`, { params: { limit: 10, cursor: c } });
+
+      setIdeas((prev) => (kind === "init" ? r.data.items : [...prev, ...r.data.items]));
+      setCursor(r.data.nextCursor);
     } catch {
       setError(true);
     } finally {
@@ -76,7 +69,9 @@ export default function Profile({ mode }: { mode: "me" | "user" }) {
     return (
       <>
         <TopBar />
-        <div className="container"><LoadingState text="Loading profile..." /></div>
+        <div className="container">
+          <LoadingState text="Loading profile..." />
+        </div>
       </>
     );
   }
@@ -85,7 +80,9 @@ export default function Profile({ mode }: { mode: "me" | "user" }) {
     return (
       <>
         <TopBar />
-        <div className="container"><ErrorState title="Failed to load profile" /></div>
+        <div className="container">
+          <ErrorState title="Failed to load profile" />
+        </div>
       </>
     );
   }
@@ -96,7 +93,16 @@ export default function Profile({ mode }: { mode: "me" | "user" }) {
     <>
       <TopBar />
       <div className="container" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <div className="card" style={{ padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+        <div
+          className="card"
+          style={{
+            padding: 16,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <Avatar url={profile.avatarUrl} size={56} />
             <div>
@@ -105,7 +111,11 @@ export default function Profile({ mode }: { mode: "me" | "user" }) {
             </div>
           </div>
 
-          {isMe && <Button variant="secondary" onClick={() => nav("/profile/me/edit")}>Edit Profile</Button>}
+          {isMe && (
+            <Button variant="secondary" onClick={() => nav("/profile/me/edit")}>
+              Edit Profile
+            </Button>
+          )}
         </div>
 
         {ideas.length === 0 && <EmptyState title="No ideas yet" />}

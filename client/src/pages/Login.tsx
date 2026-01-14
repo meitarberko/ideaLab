@@ -3,8 +3,7 @@ import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { Button } from "../components/Button";
 import Input from "../components/Input";
-import LabIcon from "../images/LabIcon.png"; 
-
+import LabIcon from "../images/LabIcon.png";
 
 export default function Login() {
   const { setSession } = useAuth();
@@ -13,16 +12,20 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  useEffect(() => {
-  const url = new URL(window.location.href);
-  const token = url.searchParams.get("token");
-  if (token) {
-    localStorage.setItem("accessToken", token);
-    window.history.replaceState({}, "", "/feed");
-    window.location.href = "/feed";
-  }
-}, []);
+  const googleLogin = () => {
+    const base = import.meta.env.VITE_API_BASE || "";
+    window.location.href = `${base}/auth/google`;
+  };
 
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const token = url.searchParams.get("token");
+    if (token) {
+      localStorage.setItem("accessToken", token);
+      window.history.replaceState({}, "", "/feed");
+      window.location.href = "/feed";
+    }
+  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,6 +57,7 @@ export default function Login() {
             <div className="label">Username</div>
             <Input value={username} onChange={(e) => setUsername(e.target.value)} />
           </div>
+
           <div>
             <div className="label">Password</div>
             <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
@@ -61,12 +65,17 @@ export default function Login() {
 
           {err && <div style={{ color: "var(--danger)", fontWeight: 700 }}>{err}</div>}
 
-          <Button loading={loading} type="submit">Login</Button>
-          <Button variant="secondary" type="button" onClick={() => (window.location.href = "/api/auth/google")}>
+          <Button loading={loading} type="submit">
+            Login
+          </Button>
+
+          <Button variant="secondary" type="button" onClick={googleLogin}>
             Continue with Google
           </Button>
 
-          <a href="/register" style={{ marginTop: 6 }}>Create account</a>
+          <a href="/register" style={{ marginTop: 6 }}>
+            Create account
+          </a>
         </form>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import TopBar from "../components/TopBar";
 import { api } from "../lib/api";
 import type { IdeaFeedItem } from "../types";
@@ -21,39 +21,63 @@ export default function Feed() {
 
   const [users, setUsers] = useState<Record<string, UserMini>>({});
 
-  const load = async (mode: "init" | "more") => {
-    try {
-      setError(false);
-      if (mode === "init") setLoading(true);
-      if (mode === "more") setLoadingMore(true);
+  const [autoLoad, setAutoLoad] = useState(true);
 
-      const r = await api.get("/ideas", { params: { limit: 10, cursor: mode === "more" ? cursor : undefined } });
-      const newItems: IdeaFeedItem[] = r.data.items;
-      const nextCursor: string | null = r.data.nextCursor;
+  const load = useCallback(
+    async (mode: "init" | "more") => {
+      try {
+        setError(false);
+        if (mode === "init") setLoading(true);
+        if (mode === "more") setLoadingMore(true);
 
-      const authorIds = Array.from(new Set(newItems.map((i) => i.authorId)));
-      const missing = authorIds.filter((id) => !users[id]);
+        const r = await api.get("/ideas", {
+          params: { limit: 10, cursor: mode === "more" ? cursor : undefined }
+        });
 
-      const fetched: Record<string, UserMini> = {};
-      for (const id of missing) {
-        const u = await api.get(`/users/${id}`);
-        fetched[id] = u.data;
+        const newItems: IdeaFeedItem[] = r.data.items;
+        const nextCursor: string | null = r.data.nextCursor;
+
+        const authorIds = Array.from(new Set(newItems.map((i) => i.authorId)));
+        const missing = authorIds.filter((id) => !users[id]);
+
+        const fetched: Record<string, UserMini> = {};
+        for (const id of missing) {
+          const u = await api.get(`/users/${id}`);
+          fetched[id] = u.data;
+        }
+
+        setUsers((prev) => ({ ...prev, ...fetched }));
+        setItems((prev) => (mode === "init" ? newItems : [...prev, ...newItems]));
+        setCursor(nextCursor);
+      } catch {
+        setError(true);
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
       }
-
-      setUsers((prev) => ({ ...prev, ...fetched }));
-      setItems((prev) => (mode === "init" ? newItems : [...prev, ...newItems]));
-      setCursor(nextCursor);
-    } catch {
-      setError(true);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  };
+    },
+    [cursor, users]
+  );
 
   useEffect(() => {
     load("init");
-  }, []);
+  }, [load]);
+
+  useEffect(() => {
+    if (!autoLoad) return;
+
+    const el = document.getElementById("feed-sentinel");
+    if (!el) return;
+
+    const obs = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting && cursor && !loadingMore) {
+        load("more");
+      }
+    });
+
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [cursor, loadingMore, autoLoad, load]);
 
   const canMore = !!cursor;
 
@@ -66,7 +90,9 @@ export default function Feed() {
     return (
       <>
         <TopBar />
-        <div className="container"><LoadingState text="Loading feed..." /></div>
+        <div className="container">
+          <LoadingState text="Loading feed..." />
+        </div>
       </>
     );
   }
@@ -75,7 +101,9 @@ export default function Feed() {
     return (
       <>
         <TopBar />
-        <div className="container"><ErrorState title="Failed to load feed" /></div>
+        <div className="container">
+          <ErrorState title="Failed to load feed" />
+        </div>
       </>
     );
   }
@@ -89,6 +117,7 @@ export default function Feed() {
         {items.map((idea) => {
           const author = users[idea.authorId] || { id: idea.authorId, username: "Loading..." };
           const canEdit = author.id === user?.id;
+
           return (
             <IdeaCard
               key={idea.id}
@@ -103,15 +132,13 @@ export default function Feed() {
 
         {canMore && (
           <div style={{ display: "flex", justifyContent: "center" }}>
-            <button
-              className="btn btn-secondary"
-              disabled={loadingMore}
-              onClick={() => load("more")}
-            >
+            <button className="btn btn-secondary" disabled={loadingMore} onClick={() => load("more")}>
               {loadingMore ? "Loading..." : "Load more"}
             </button>
           </div>
         )}
+
+        <div id="feed-sentinel" style={{ height: 1 }} />
       </div>
     </>
   );
