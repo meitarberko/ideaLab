@@ -49,9 +49,18 @@ router.use("/:id/comments", commentsRouter);
  *               image:
  *                 type: string
  *                 format: binary
+ *           example:
+ *             text: "This is my idea"
+ *             image: "<binary>"
  *     responses:
  *       201:
  *         description: Idea created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/IdeaCreateResponse"
+ *             example:
+ *               id: "64f1c2b5e4b0f1a2b3c4d5e6"
  *       400:
  *         description: Validation error
  *       401:
@@ -266,12 +275,24 @@ const updateSchema = z.object({
  *               removeImage:
  *                 type: string
  *                 example: "true"
- *             example:
- *               text: "Updated idea text"
- *               removeImage: "true"
+ *           examples:
+ *             updateText:
+ *               summary: Update text
+ *               value:
+ *                 text: "Updated idea text"
+ *             removeImage:
+ *               summary: Remove image
+ *               value:
+ *                 removeImage: "true"
  *     responses:
  *       200:
  *         description: Idea updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/IdeaCreateResponse"
+ *             example:
+ *               id: "64f1c2b5e4b0f1a2b3c4d5e6"
  *       400:
  *         description: Validation error
  *       401:
