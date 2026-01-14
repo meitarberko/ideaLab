@@ -22,13 +22,22 @@ const uploadAvatar = makeUploader("avatars");
  *     responses:
  *       200:
  *         description: User profile
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/UserProfile"
+ *             example:
+ *               id: "64f1c2b5e4b0f1a2b3c4d5e6"
+ *               username: "janedoe"
+ *               email: "jane@example.com"
+ *               avatarUrl: "https://cdn.example.com/uploads/avatars/jane.png"
  *       401:
  *         description: Unauthorized
  *       404:
  *         description: Not found
  */
-router.get("/me", requireAuth, async (req: AuthedRequest, res) => {
-  const user = await User.findById(req.user!.userId).lean();
+router.get("/me", requireAuth, async (req, res) => {
+  const user = await User.findById((req as AuthedRequest).user!.userId).lean();
   if (!user) return res.status(404).json({ message: "Not found" });
   res.json({ id: String(user._id), username: user.username, email: user.email, avatarUrl: user.avatarUrl });
 });
@@ -60,9 +69,27 @@ const updateSchema = z.object({
  *               avatar:
  *                 type: string
  *                 format: binary
+ *           examples:
+ *             updateUsername:
+ *               summary: Update username
+ *               value:
+ *                 username: "newusername"
+ *             uploadAvatar:
+ *               summary: Upload avatar
+ *               value:
+ *                 avatar: "<binary>"
  *     responses:
  *       200:
  *         description: Updated user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/UserProfile"
+ *             example:
+ *               id: "64f1c2b5e4b0f1a2b3c4d5e6"
+ *               username: "janedoe"
+ *               email: "jane@example.com"
+ *               avatarUrl: "https://cdn.example.com/uploads/avatars/jane.png"
  *       400:
  *         description: Validation error
  *       401:
@@ -72,7 +99,7 @@ const updateSchema = z.object({
  *       409:
  *         description: Conflict
  */
-router.patch("/me", requireAuth, uploadAvatar.single("avatar"), async (req: AuthedRequest, res) => {
+router.patch("/me", requireAuth, uploadAvatar.single("avatar"), async (req, res) => {
   const parsed = updateSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ message: "Validation error" });
 
@@ -85,11 +112,11 @@ router.patch("/me", requireAuth, uploadAvatar.single("avatar"), async (req: Auth
   }
 
   if (updates.username) {
-    const exists = await User.findOne({ username: updates.username, _id: { $ne: req.user!.userId } }).lean();
+    const exists = await User.findOne({ username: updates.username, _id: { $ne: (req as AuthedRequest).user!.userId } }).lean();
     if (exists) return res.status(409).json({ message: "Username already exists" });
   }
 
-  const user = await User.findByIdAndUpdate(req.user!.userId, updates, { new: true }).lean();
+  const user = await User.findByIdAndUpdate((req as AuthedRequest).user!.userId, updates, { new: true }).lean();
   if (!user) return res.status(404).json({ message: "Not found" });
 
   res.json({ id: String(user._id), username: user.username, email: user.email, avatarUrl: user.avatarUrl });
