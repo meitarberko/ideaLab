@@ -1,12 +1,12 @@
 import axios from "axios";
 
+export const API_BASE =
+  (import.meta as any).env?.VITE_API_BASE || (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:3001/api";
+
 export const api = axios.create({
-  baseURL: "/api",
+  baseURL: API_BASE,
   withCredentials: true
 });
-
-export const API_BASE =
-  (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:3000/api";
 
 api.interceptors.response.use(
   (res) => res,
