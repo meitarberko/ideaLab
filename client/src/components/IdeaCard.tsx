@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Avatar from "./Avatar";
 import { Button } from "./Button";
 import type { IdeaFeedItem } from "../types";
-import { useAuth } from "../lib/auth";
+// import { useAuth } from "../lib/auth";
 
 export default function IdeaCard({
   idea,
@@ -19,7 +19,7 @@ export default function IdeaCard({
   onDelete: () => void;
 }) {
   const nav = useNavigate();
-  const { user } = useAuth();
+  // const { user } = useAuth();
 
   const short = idea.text.length > 220 ? idea.text.slice(0, 220) + "..." : idea.text;
 
