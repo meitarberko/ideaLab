@@ -20,7 +20,7 @@ const ideaAnalysisSchema = new Schema<IdeaAnalysisDoc>(
   {
     ideaId: { type: Schema.Types.ObjectId, required: true, ref: "Idea", index: true },
     ideaUpdatedAt: { type: Date, required: true },
-    question: { type: String, required: true },
+    question: { type: String, default: "" },
     result: {
       ideaDevelopment: { type: String, required: true },
       competitors: { type: [String], required: true },
