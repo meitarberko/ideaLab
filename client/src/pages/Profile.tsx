@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import { api } from "../lib/api";
@@ -24,19 +24,34 @@ export default function Profile({ mode }: { mode: "me" | "user" }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const profileInFlightRef = useRef(false);
+  const initInFlightRef = useRef(false);
+  const moreInFlightRef = useRef(false);
+  const lastUserIdRef = useRef<string | undefined>(undefined);
 
   const loadProfile = async () => {
     if (!userId) return;
+    if (profileInFlightRef.current) return;
+    profileInFlightRef.current = true;
     try {
       const r = await api.get(mode === "me" ? "/users/me" : `/users/${userId}`);
       setProfile(r.data);
     } catch {
       setError(true);
+    } finally {
+      profileInFlightRef.current = false;
     }
   };
 
   const loadIdeas = async (kind: "init" | "more") => {
     if (!userId) return;
+    if (kind === "init") {
+      if (initInFlightRef.current) return;
+      initInFlightRef.current = true;
+    } else {
+      if (moreInFlightRef.current) return;
+      moreInFlightRef.current = true;
+    }
     try {
       if (kind === "init") setLoading(true);
       if (kind === "more") setLoadingMore(true);
@@ -55,10 +70,15 @@ export default function Profile({ mode }: { mode: "me" | "user" }) {
     } finally {
       setLoading(false);
       setLoadingMore(false);
+      if (kind === "init") initInFlightRef.current = false;
+      if (kind === "more") moreInFlightRef.current = false;
     }
   };
 
   useEffect(() => {
+    if (!userId) return;
+    if (lastUserIdRef.current === userId && initInFlightRef.current) return;
+    lastUserIdRef.current = userId;
     setError(false);
     setCursor(null);
     setIdeas([]);

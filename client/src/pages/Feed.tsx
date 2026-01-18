@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import TopBar from "../components/TopBar";
 import { api } from "../lib/api";
 import type { IdeaFeedItem } from "../types";
@@ -23,22 +23,37 @@ export default function Feed() {
 
   const [autoLoad, setAutoLoad] = useState(true);
 
+  const didInitRef = useRef(false);
+  const inFlightRef = useRef<{ init: boolean; more: boolean }>({ init: false, more: false });
+  const cursorRef = useRef<string | null>(cursor);
+  const usersRef = useRef<Record<string, UserMini>>(users);
+
+  useEffect(() => {
+    cursorRef.current = cursor;
+  }, [cursor]);
+
+  useEffect(() => {
+    usersRef.current = users;
+  }, [users]);
+
   const load = useCallback(
     async (mode: "init" | "more") => {
+      if (inFlightRef.current[mode]) return;
+      inFlightRef.current[mode] = true;
       try {
         setError(false);
         if (mode === "init") setLoading(true);
         if (mode === "more") setLoadingMore(true);
 
         const r = await api.get("/ideas", {
-          params: { limit: 10, cursor: mode === "more" ? cursor : undefined }
+          params: { limit: 10, cursor: mode === "more" ? cursorRef.current : undefined }
         });
 
         const newItems: IdeaFeedItem[] = r.data.items;
         const nextCursor: string | null = r.data.nextCursor;
 
         const authorIds = Array.from(new Set(newItems.map((i) => i.authorId)));
-        const missing = authorIds.filter((id) => !users[id]);
+        const missing = authorIds.filter((id) => !usersRef.current[id]);
 
         const fetched: Record<string, UserMini> = {};
         for (const id of missing) {
@@ -46,7 +61,9 @@ export default function Feed() {
           fetched[id] = u.data;
         }
 
-        setUsers((prev) => ({ ...prev, ...fetched }));
+        const nextUsers = { ...usersRef.current, ...fetched };
+        usersRef.current = nextUsers;
+        setUsers(nextUsers);
         setItems((prev) => (mode === "init" ? newItems : [...prev, ...newItems]));
         setCursor(nextCursor);
       } catch {
@@ -54,12 +71,15 @@ export default function Feed() {
       } finally {
         setLoading(false);
         setLoadingMore(false);
+        inFlightRef.current[mode] = false;
       }
     },
-    [cursor, users]
+    []
   );
 
   useEffect(() => {
+    if (didInitRef.current) return;
+    didInitRef.current = true;
     load("init");
   }, [load]);
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import TopBar from "../components/TopBar";
 import { Button } from "../components/Button";
 import Input from "../components/Input";
@@ -18,9 +18,12 @@ export default function EditProfile() {
 
   const [username, setUsername] = useState("");
   const [avatar, setAvatar] = useState<File | null>(null);
+  const inFlightRef = useRef(false);
 
   useEffect(() => {
     const boot = async () => {
+      if (inFlightRef.current) return;
+      inFlightRef.current = true;
       try {
         const r = await api.get("/users/me");
         setUsername(r.data.username);
@@ -28,12 +31,14 @@ export default function EditProfile() {
         setError(true);
       } finally {
         setLoading(false);
+        inFlightRef.current = false;
       }
     };
     boot();
   }, []);
 
   const save = async () => {
+    if (saving) return;
     setSaving(true);
     try {
       const fd = new FormData();
@@ -88,7 +93,33 @@ export default function EditProfile() {
 
             <div>
               <div className="label">Avatar (optional)</div>
-              <Input type="file" accept="image/*" onChange={(e) => setAvatar(e.target.files?.[0] || null)} />
+              <input
+                id="avatar"
+                type="file"
+                accept="image/*"
+                className="file-hidden"
+                onChange={(e) => setAvatar(e.target.files?.[0] || null)}
+              />
+
+              <div className="file-row">
+                <label htmlFor="avatar" className="btn btn-secondary">
+                  Choose file
+                </label>
+
+                <div className="file-name">
+                  {avatar ? avatar.name : "No file chosen"}
+                </div>
+
+                {avatar && (
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={() => setAvatar(null)}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
             </div>
 
             <div style={{ display: "flex", gap: 10 }}>

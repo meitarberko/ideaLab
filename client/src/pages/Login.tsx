@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { Button } from "../components/Button";
@@ -8,18 +9,30 @@ import LabIcon from "../images/LabIcon.png";
 
 export default function Login() {
   const { setSession } = useAuth();
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  useEffect(() => {
+    setUsername("");
+    setPassword("");
+  }, []);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr(null);
+    if (!username.trim() || !password) {
+      setErr("Username and password are required");
+      return;
+    }
+    if (loading) return;
     setLoading(true);
     try {
       const r = await api.post("/auth/login", { username, password });
       setSession(r.data.accessToken, r.data.user);
+      navigate("/feed");
     } catch {
       setErr("Invalid credentials");
     } finally {
@@ -51,7 +64,7 @@ export default function Login() {
 
           {err && <div style={{ color: "var(--danger)", fontWeight: 700 }}>{err}</div>}
 
-          <Button loading={loading} type="submit">
+          <Button loading={loading} disabled={!username.trim() || !password} type="submit">
             Login
           </Button>
 
