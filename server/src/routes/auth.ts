@@ -5,6 +5,7 @@ import multer from "multer";
 import { User } from "../models/User";
 import { clearRefreshCookie, setRefreshCookie } from "../lib/cookies";
 import { hashToken, signAccessToken, signRefreshToken, verifyRefreshToken } from "../lib/tokens";
+import { verifyGoogleIdToken } from "../lib/google";
 
 const router = Router();
 const upload = multer();
@@ -26,6 +27,26 @@ function sendZodError(res: Response, error: z.ZodError) {
       message: i.message
     }))
   });
+}
+
+function buildUsernameBase(name: string | null, email: string | null, googleId: string) {
+  const raw = (name || (email ? email.split("@")[0] : "") || `user${googleId.slice(0, 6)}`).trim();
+  const compact = raw.replace(/\s+/g, "");
+  const cleaned = compact.replace(/[^a-zA-Z0-9._-]/g, "");
+  const fallback = `user${googleId.slice(0, 6)}`;
+  return (cleaned || fallback).slice(0, 24);
+}
+
+async function generateUniqueUsername(base: string) {
+  let candidate = base;
+  let suffix = 0;
+  while (await User.findOne({ username: candidate }).lean()) {
+    suffix += 1;
+    const suffixStr = String(suffix);
+    const trimmed = base.slice(0, Math.max(1, 24 - suffixStr.length));
+    candidate = `${trimmed}${suffixStr}`;
+  }
+  return candidate;
 }
 
 const registerSchema = z.object({
@@ -103,6 +124,10 @@ const loginSchema = z.object({
   password: z.string().min(5, "Password must be at least 5 characters")
 });
 
+const googleSchema = z.object({
+  idToken: z.string().min(1, "idToken is required")
+});
+
 /**
  * @openapi
  * /api/auth/login:
@@ -151,6 +176,90 @@ router.post("/login", parseMultipartIfNeeded, async (req: Request, res: Response
   const payload = { userId: String(user._id), username: user.username };
   const accessToken = signAccessToken(payload);
   const refreshToken = signRefreshToken(payload);
+
+  const rtHash = hashToken(refreshToken);
+  user.refreshTokenHashes = [rtHash, ...user.refreshTokenHashes].slice(0, 10);
+  await user.save();
+
+  setRefreshCookie(res, refreshToken);
+  res.json({
+    accessToken,
+    user: { id: String(user._id), username: user.username, email: user.email, avatarUrl: user.avatarUrl }
+  });
+});
+
+/**
+ * @openapi
+ * /api/auth/google:
+ *   post:
+ *     summary: Login with Google ID token
+ *     tags:
+ *       - Auth
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [idToken]
+ *             properties:
+ *               idToken: { type: string, example: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..." }
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       400:
+ *         description: Validation error or missing email
+ *       401:
+ *         description: Invalid Google token
+ *       500:
+ *         description: Google OAuth not configured
+ */
+router.post("/google", async (req: Request, res: Response) => {
+  const parsed = googleSchema.safeParse(req.body);
+  if (!parsed.success) return sendZodError(res, parsed.error);
+
+  let payload;
+  try {
+    payload = await verifyGoogleIdToken(parsed.data.idToken);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "";
+    if (message.includes("GOOGLE_CLIENT_ID")) {
+      return res.status(500).json({ message: "Google OAuth not configured" });
+    }
+    return res.status(401).json({ message: "Invalid Google token" });
+  }
+
+  if (!payload.email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  let user = await User.findOne({ googleId: payload.googleId });
+  if (!user) {
+    user = await User.findOne({ email: payload.email });
+    if (user) {
+      user.googleId = payload.googleId;
+      if (user.provider !== "google") user.provider = "google";
+      if (!user.avatarUrl && payload.picture) user.avatarUrl = payload.picture;
+      await user.save();
+    }
+  }
+
+  if (!user) {
+    const baseUsername = buildUsernameBase(payload.name, payload.email, payload.googleId);
+    const username = await generateUniqueUsername(baseUsername);
+    user = await User.create({
+      username,
+      email: payload.email,
+      provider: "google",
+      googleId: payload.googleId,
+      avatarUrl: payload.picture || undefined
+    });
+  }
+
+  const authPayload = { userId: String(user._id), username: user.username };
+  const accessToken = signAccessToken(authPayload);
+  const refreshToken = signRefreshToken(authPayload);
 
   const rtHash = hashToken(refreshToken);
   user.refreshTokenHashes = [rtHash, ...user.refreshTokenHashes].slice(0, 10);

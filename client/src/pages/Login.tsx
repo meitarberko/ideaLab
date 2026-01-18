@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { Button } from "../components/Button";
+import { GoogleLoginButton } from "../components/GoogleLoginButton";
 import Input from "../components/Input";
 import LabIcon from "../images/LabIcon.png";
 
@@ -11,21 +12,6 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-
-  const googleLogin = () => {
-    const base = import.meta.env.VITE_API_BASE || "";
-    window.location.href = `${base}/auth/google`;
-  };
-
-  useEffect(() => {
-    const url = new URL(window.location.href);
-    const token = url.searchParams.get("token");
-    if (token) {
-      localStorage.setItem("accessToken", token);
-      window.history.replaceState({}, "", "/feed");
-      window.location.href = "/feed";
-    }
-  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,9 +55,7 @@ export default function Login() {
             Login
           </Button>
 
-          <Button variant="secondary" type="button" onClick={googleLogin}>
-            Continue with Google
-          </Button>
+          <GoogleLoginButton />
 
           <a href="/register" style={{ marginTop: 6 }}>
             Create account
