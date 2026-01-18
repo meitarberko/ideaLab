@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { Button } from "../components/Button";
@@ -8,6 +9,7 @@ import LabIcon from "../images/LabIcon.png";
 
 export default function Login() {
   const { setSession } = useAuth();
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,6 +22,7 @@ export default function Login() {
     try {
       const r = await api.post("/auth/login", { username, password });
       setSession(r.data.accessToken, r.data.user);
+      navigate("/feed");
     } catch {
       setErr("Invalid credentials");
     } finally {

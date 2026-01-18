@@ -53,7 +53,7 @@ const swaggerSpec = swaggerJSDoc({
   apis: ["./src/routes/**/*.ts"]
 });
 
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use("/api", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 const uploadsDir = process.env.UPLOADS_DIR || path.join(process.cwd(), "uploads");
 
