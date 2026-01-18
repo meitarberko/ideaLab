@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import TopBar from "../components/TopBar";
 import {Button } from "../components/Button";
 import Input from "../components/Input";
@@ -17,9 +17,16 @@ export default function EditIdea() {
   const [currentImageUrl, setCurrentImageUrl] = useState<string | undefined>(undefined);
   const [newImage, setNewImage] = useState<File | null>(null);
   const [removeImage, setRemoveImage] = useState(false);
+  const inFlightRef = useRef(false);
+  const lastIdRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
+    if (!id) return;
+    if (lastIdRef.current === id && inFlightRef.current) return;
+    lastIdRef.current = id;
     const load = async () => {
+      if (inFlightRef.current) return;
+      inFlightRef.current = true;
       try {
         const r = await api.get(`/ideas/${id}`);
         setText(r.data.text);
@@ -28,6 +35,7 @@ export default function EditIdea() {
         setError(true);
       } finally {
         setLoading(false);
+        inFlightRef.current = false;
       }
     };
     load();
@@ -35,6 +43,7 @@ export default function EditIdea() {
 
   const save = async () => {
     if (!id) return;
+    if (saving) return;
     setSaving(true);
     try {
       const fd = new FormData();

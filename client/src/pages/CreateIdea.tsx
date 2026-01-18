@@ -13,6 +13,7 @@ export default function CreateIdea() {
   const [err, setErr] = useState<string | null>(null);
 
   const submit = async () => {
+    if (loading) return;
     setErr(null);
     if (!text.trim()) return;
     setLoading(true);

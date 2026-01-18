@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import { api } from "../lib/api";
@@ -55,8 +55,12 @@ export default function IdeaDetails() {
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const inFlightRef = useRef(false);
+  const lastIdRef = useRef<string | undefined>(undefined);
 
   const loadAll = async () => {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     try {
       setError(false);
       setLoading(true);
@@ -75,6 +79,7 @@ export default function IdeaDetails() {
       setError(true);
     } finally {
       setLoading(false);
+      inFlightRef.current = false;
     }
   };
 
@@ -89,6 +94,9 @@ export default function IdeaDetails() {
   };
 
   useEffect(() => {
+    if (!id) return;
+    if (lastIdRef.current === id && inFlightRef.current) return;
+    lastIdRef.current = id;
     loadAll();
   }, [id]);
 
