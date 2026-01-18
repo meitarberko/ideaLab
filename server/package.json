@@ -73,6 +73,7 @@
     "get-proto": "^1.0.1",
     "glob": "^7.2.3",
     "glob-parent": "^5.1.2",
+    "google-auth-library": "^9.15.1",
     "gopd": "^1.2.0",
     "has-symbols": "^1.1.0",
     "hasown": "^2.0.2",
