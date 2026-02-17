@@ -1,7 +1,6 @@
 import axios from "axios";
 
-export const API_BASE =
-  (import.meta as any).env?.VITE_API_BASE || (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:3001/api";
+export const API_BASE = "http://127.0.0.1:5173/api";
 
 export const api = axios.create({
   baseURL: API_BASE,
@@ -50,7 +49,7 @@ api.interceptors.response.use(
       try {
         if (!refreshPromise) {
           refreshPromise = (async () => {
-            const r = await api.post("/auth/refresh", null, { __isRefresh: true });
+            const r = await api.post("/auth/refresh", null, { __isRefresh: true } as any);
             const token = r.data.accessToken;
             localStorage.setItem("accessToken", token);
             setAccessToken(token);
