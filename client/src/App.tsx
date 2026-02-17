@@ -8,6 +8,7 @@ import IdeaDetails from "./pages/IdeaDetails";
 import EditIdea from "./pages/EditIdea";
 import Profile from "./pages/Profile";
 import EditProfile from "./pages/EditProfile";
+import type { JSX } from "react";
 
 export default function App() {
   return (

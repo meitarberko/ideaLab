@@ -36,7 +36,8 @@ jspm_packages/
 .env
 .env.*
 !.env.example
-
+.env.*
+server/.env.example
 # =========================
 # Build outputs
 # =========================
