@@ -1,7 +1,6 @@
 import { useState } from "react";
 import TopBar from "../components/TopBar";
 import { Button } from "../components/Button";
-import Input from "../components/Input";
 import { api } from "../lib/api";
 import { useNavigate } from "react-router-dom";
 
@@ -51,13 +50,33 @@ export default function CreateIdea() {
 
             <div>
               <div className="label">Image (optional)</div>
-              <Input type="file" accept="image/*" onChange={(e) => setImage(e.target.files?.[0] || null)} />
-              {image && (
-                <div style={{ marginTop: 8, display: "flex", gap: 10, alignItems: "center" }}>
-                  <div style={{ fontWeight: 800 }}>{image.name}</div>
-                  <Button variant="secondary" type="button" onClick={() => setImage(null)}>Remove</Button>
+              <input
+                id="idea-image"
+                type="file"
+                accept="image/*"
+                className="file-hidden"
+                onChange={(e) => setImage(e.target.files?.[0] || null)}
+              />
+
+              <div className="file-row">
+                <label htmlFor="idea-image" className="btn btn-secondary">
+                  Choose file
+                </label>
+
+                <div className="file-name">
+                  {image ? image.name : "No file chosen"}
                 </div>
-              )}
+
+                {image && (
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={() => setImage(null)}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
             </div>
 
             {err && <div style={{ fontWeight: 900, color: "var(--danger)" }}>{err}</div>}

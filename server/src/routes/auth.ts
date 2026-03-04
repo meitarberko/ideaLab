@@ -91,32 +91,49 @@ const registerSchema = z.object({
  *         description: Conflict
  */
 router.post("/register", parseMultipartIfNeeded, async (req: Request, res: Response) => {
-  const parsed = registerSchema.safeParse(req.body);
-  if (!parsed.success) return sendZodError(res, parsed.error);
+  try {
+    const parsed = registerSchema.safeParse(req.body);
+    if (!parsed.success) return sendZodError(res, parsed.error);
 
-  const { username, email, password } = parsed.data;
+    const { username, email, password } = parsed.data;
 
-  const usernameExists = await User.findOne({ username }).lean();
-  if (usernameExists) return res.status(409).json({ message: "Username already exists" });
+    const usernameExists = await User.findOne({ username }).lean();
+    if (usernameExists) return res.status(409).json({ message: "Username already exists" });
 
-  const emailExists = await User.findOne({ email }).lean();
-  if (emailExists) return res.status(409).json({ message: "Email already exists" });
+    const emailExists = await User.findOne({ email }).lean();
+    if (emailExists) return res.status(409).json({ message: "Email already exists" });
 
-  const passwordHash = await bcrypt.hash(password, 10);
-  const user = await User.create({ username, email, passwordHash, provider: "local" });
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await User.create({ username, email, passwordHash, provider: "local" });
 
-  const payload = { userId: String(user._id), username: user.username };
-  const accessToken = signAccessToken(payload);
-  const refreshToken = signRefreshToken(payload);
+    const payload = { userId: String(user._id), username: user.username };
+    const accessToken = signAccessToken(payload);
+    const refreshToken = signRefreshToken(payload);
 
-  user.refreshTokenHashes = [hashToken(refreshToken)];
-  await user.save();
+    user.refreshTokenHashes = [hashToken(refreshToken)];
+    await user.save();
 
-  setRefreshCookie(res, refreshToken);
-  res.status(201).json({
-    accessToken,
-    user: { id: String(user._id), username: user.username, email: user.email, avatarUrl: user.avatarUrl }
-  });
+    setRefreshCookie(res, refreshToken);
+    res.status(201).json({
+      message: "User created",
+      accessToken,
+      user: { id: String(user._id), username: user.username, email: user.email, avatarUrl: user.avatarUrl }
+    });
+  } catch (err: any) {
+    if (err?.code === 11000) {
+      const duplicateField = Object.keys(err?.keyPattern || {})[0];
+      if (duplicateField === "username") {
+        return res.status(409).json({ message: "Username already exists" });
+      }
+      if (duplicateField === "email") {
+        return res.status(409).json({ message: "Email already exists" });
+      }
+      return res.status(409).json({ message: "User already exists" });
+    }
+
+    console.error("Register failed:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
 });
 
 const loginSchema = z.object({

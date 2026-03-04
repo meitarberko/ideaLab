@@ -12,6 +12,7 @@ import { createIdeaBodySchema, ideaIdParamsSchema } from "../schemas/ideasSchema
 import analyzeRouter from "./analyze";
 import likesRouter from "./likes";
 import commentsRouter from "./comments";
+import mongoose from "mongoose";
 
 const router = Router();
 const uploadIdeaImage = makeUploader("ideas");
@@ -116,9 +117,15 @@ router.post(
 router.get("/", async (req, res) => {
   const limit = Math.min(Number(req.query.limit || 10), 30);
   const cursor = req.query.cursor ? new Date(String(req.query.cursor)) : null;
+  const filterUserId = typeof req.query.userId === "string" ? req.query.userId : undefined;
+
+  if (filterUserId && !mongoose.Types.ObjectId.isValid(filterUserId)) {
+    return res.status(400).json({ message: "Invalid user id" });
+  }
 
   const query: any = {};
   if (cursor) query.createdAt = { $lt: cursor };
+  if (filterUserId) query.authorId = filterUserId;
 
   const ideas = await Idea.find(query).sort({ createdAt: -1 }).limit(limit + 1).lean();
 
@@ -140,12 +147,12 @@ router.get("/", async (req, res) => {
   const likesMap = new Map<string, number>(likesAgg.map((x: any) => [String(x._id), x.count]));
   const commentsMap = new Map<string, number>(commentsAgg.map((x: any) => [String(x._id), x.count]));
 
-  const userId = (req as any).user?.id;
+  const viewerUserId = (req as any).user?.id;
   let likedSet = new Set<string>();
 
-  if (userId) {
+  if (viewerUserId) {
     const ids = items.map((d: any) => String(d._id));
-    const likes = await Like.find({ userId, ideaId: { $in: ids } }).select("ideaId").lean();
+    const likes = await Like.find({ userId: viewerUserId, ideaId: { $in: ids } }).select("ideaId").lean();
     likedSet = new Set(likes.map((l: any) => String(l.ideaId)));
   }
 
@@ -158,7 +165,7 @@ router.get("/", async (req, res) => {
       createdAt: i.createdAt,
       likesCount: likesMap.get(String(i._id)) || 0,
       commentsCount: commentsMap.get(String(i._id)) || 0,
-      likedByMe: userId ? likedSet.has(String(i._id)) : false
+      likedByMe: viewerUserId ? likedSet.has(String(i._id)) : false
     })),
     nextCursor
   });
