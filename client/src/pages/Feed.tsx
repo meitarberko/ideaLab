@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import TopBar from "../components/TopBar";
 import { api } from "../lib/api";
 import type { IdeaFeedItem } from "../types";
@@ -21,7 +21,7 @@ export default function Feed() {
 
   const [users, setUsers] = useState<Record<string, UserMini>>({});
 
-  const [autoLoad, setAutoLoad] = useState(true);
+  const [autoLoad] = useState(true);
 
   const didInitRef = useRef(false);
   const inFlightRef = useRef<{ init: boolean; more: boolean }>({ init: false, more: false });
