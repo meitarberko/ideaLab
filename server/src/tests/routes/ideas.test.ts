@@ -95,6 +95,28 @@ test("GET /api/ideas supports cursor and likedByMe", async () => {
   expect(oldItem.likedByMe).toBe(false);
 });
 
+test("GET /api/ideas supports userId filter and sorts newest first", async () => {
+  const reg1 = await registerUser(app, { username: "u2c", email: "u2c@test.com" });
+  const reg2 = await registerUser(app, { username: "u2d", email: "u2d@test.com" });
+  const user1Id = new mongoose.Types.ObjectId(reg1.body.user.id);
+  const user2Id = new mongoose.Types.ObjectId(reg2.body.user.id);
+
+  const older = await Idea.create({ authorId: user1Id, text: "older by user1" });
+  await new Promise((r) => setTimeout(r, 5));
+  const newer = await Idea.create({ authorId: user1Id, text: "newer by user1" });
+  await Idea.create({ authorId: user2Id, text: "by user2" });
+
+  const filtered = await request(app).get(`/api/ideas?userId=${user1Id.toString()}&limit=10`);
+  expect(filtered.status).toBe(200);
+  expect(filtered.body.items.length).toBe(2);
+  expect(filtered.body.items[0].id).toBe(String(newer._id));
+  expect(filtered.body.items[1].id).toBe(String(older._id));
+  expect(filtered.body.items.every((i: any) => i.authorId === user1Id.toString())).toBe(true);
+
+  const invalid = await request(app).get("/api/ideas?userId=not-a-valid-id");
+  expect(invalid.status).toBe(400);
+});
+
 test("GET /api/ideas/mine returns only my ideas", async () => {
   const reg1 = await registerUser(app, { username: "u3", email: "u3@test.com" });
   const reg2 = await registerUser(app, { username: "u4", email: "u4@test.com" });

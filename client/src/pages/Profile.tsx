@@ -61,7 +61,7 @@ export default function Profile({ mode }: { mode: "me" | "user" }) {
       const r =
         mode === "me"
           ? await api.get("/ideas/mine", { params: { limit: 10, cursor: c } })
-          : await api.get(`/users/${userId}/ideas`, { params: { limit: 10, cursor: c } });
+          : await api.get("/ideas", { params: { userId, limit: 10, cursor: c } });
 
       setIdeas((prev) => (kind === "init" ? r.data.items : [...prev, ...r.data.items]));
       setCursor(r.data.nextCursor);

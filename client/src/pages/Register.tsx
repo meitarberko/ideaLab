@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { Button } from "../components/Button";
@@ -15,6 +16,7 @@ type Errors = {
 
 export default function Register() {
   const { setSession } = useAuth();
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -63,6 +65,8 @@ export default function Register() {
         const u = await api.patch("/users/me", fd, { headers: { "Content-Type": "multipart/form-data" } });
         setSession(r.data.accessToken, u.data);
       }
+
+      navigate("/feed");
     } catch (e: any) {
       const status = e?.response?.status;
       const message = e?.response?.data?.message || "";
