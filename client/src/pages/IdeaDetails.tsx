@@ -5,7 +5,7 @@ import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import Avatar from "../components/Avatar";
 import { Button } from "../components/Button";
-import Modal from "../components/Modal";
+import IdeaAnalyzerModal from "../components/IdeaAnalyzerModal";
 import { LoadingState, ErrorState, EmptyState } from "../components/State";
 
 type Idea = {
@@ -24,16 +24,6 @@ type UserMini = { id: string; username: string; avatarUrl?: string };
 
 type CommentItem = { id: string; ideaId: string; authorId: string; text: string; createdAt: string };
 
-type Analysis = {
-  ideaDevelopment: string;
-  competitors: string[];
-  risks: string[];
-  opportunities: string[];
-  improvements: string[];
-  searchDirections: string[];
-  createdAt: string;
-};
-
 export default function IdeaDetails() {
   const { id } = useParams();
   const nav = useNavigate();
@@ -51,10 +41,6 @@ export default function IdeaDetails() {
   const [commentsLoading, setCommentsLoading] = useState(false);
 
   const [analyzerOpen, setAnalyzerOpen] = useState(false);
-  const [question, setQuestion] = useState("");
-  const [analyzing, setAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState<Analysis | null>(null);
-  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const inFlightRef = useRef(false);
   const lastIdRef = useRef<string | undefined>(undefined);
 
@@ -134,21 +120,6 @@ export default function IdeaDetails() {
     setIdea({ ...idea, commentsCount: Math.max(0, idea.commentsCount - 1) });
   };
 
-  const runAnalyze = async () => {
-    if (!idea) return;
-    setAnalysisError(null);
-    setAnalyzing(true);
-    setAnalysis(null);
-    try {
-      const r = await api.post(`/ideas/${idea.id}/analyze`, { question: question.trim() || undefined });
-      setAnalysis(r.data);
-    } catch {
-      setAnalysisError("Analyzer failed. Try again later.");
-    } finally {
-      setAnalyzing(false);
-    }
-  };
-
   if (loading) {
     return (
       <>
@@ -216,7 +187,7 @@ export default function IdeaDetails() {
                 {liked ? "Unlike" : "Like"}
               </Button>
               <Button variant="primary" onClick={() => setAnalyzerOpen(true)}>
-                IdeaLab Analyzer
+                Analyze
               </Button>
             </div>
           </div>
@@ -260,57 +231,13 @@ export default function IdeaDetails() {
         </div>
       </div>
 
-      <Modal open={analyzerOpen} title="IdeaLab Analyzer" onClose={() => setAnalyzerOpen(false)}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div style={{ fontWeight: 900 }}>Free question (optional)</div>
-          <textarea
-            className="input"
-            style={{ minHeight: 90, resize: "vertical" }}
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-          />
-
-          {analysisError && <div style={{ fontWeight: 900, color: "var(--danger)" }}>{analysisError}</div>}
-
-          <Button loading={analyzing} onClick={runAnalyze}>
-            Analyze
-          </Button>
-
-          {analysis && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <div style={{ fontSize: 12, color: "rgba(0,0,0,0.6)", fontWeight: 900 }}>
-                Analyzed at: {new Date(analysis.createdAt).toLocaleString()}
-              </div>
-
-              <div className="card" style={{ padding: 12, background: "var(--bg)" }}>
-                <div style={{ fontWeight: 900 }}>Idea development</div>
-                <div style={{ marginTop: 6, whiteSpace: "pre-wrap" }}>{analysis.ideaDevelopment}</div>
-              </div>
-
-              <Section title="Competitors" items={analysis.competitors} />
-              <Section title="Risks" items={analysis.risks} />
-              <Section title="Opportunities" items={analysis.opportunities} />
-              <Section title="Improvements" items={analysis.improvements} />
-              <Section title="Search directions" items={analysis.searchDirections} />
-            </div>
-          )}
-        </div>
-      </Modal>
+      {idea && (
+        <IdeaAnalyzerModal
+          open={analyzerOpen}
+          ideaId={idea.id}
+          onClose={() => setAnalyzerOpen(false)}
+        />
+      )}
     </>
-  );
-}
-
-function Section({ title, items }: { title: string; items: string[] }) {
-  return (
-    <div className="card" style={{ padding: 12, background: "var(--bg)" }}>
-      <div style={{ fontWeight: 900 }}>{title}</div>
-      <ul style={{ margin: "8px 0 0 18px" }}>
-        {items.map((x, i) => (
-          <li key={i} style={{ marginBottom: 6 }}>
-            {x}
-          </li>
-        ))}
-      </ul>
-    </div>
   );
 }
