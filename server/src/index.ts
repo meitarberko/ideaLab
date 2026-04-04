@@ -9,7 +9,7 @@ const port = Number(process.env.PORT || 3000);
 
 async function start() {
   await connectMongo();
-  app.listen(port, () => {
+  app.listen(port, "0.0.0.0", () => {
     console.log(`API listening on ${port}`);
   });
 }
