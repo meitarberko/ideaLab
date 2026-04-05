@@ -12,7 +12,7 @@ import swaggerUi from "swagger-ui-express";
 import swaggerJSDoc from "swagger-jsdoc";
 
 const app = express();
-const distPath = path.join(__dirname, "../client/dist");
+const distPath = path.join(__dirname, "../../client/dist");
 
 app.use(express.static(distPath));
 
