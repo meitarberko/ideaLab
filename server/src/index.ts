@@ -21,8 +21,8 @@ async function start() {
   } else {
     console.log("production mode");
     const options = {
-      key: fs.readFileSync('./client-key.pem'),
-      cert: fs.readFileSync('./client-cert.pem'),
+      key: fs.readFileSync(path.resolve(__dirname, "../certs/client-key.pem")),
+      cert: fs.readFileSync(path.resolve(__dirname, "../certs/client-cert.pem")),
     };
     https.createServer(options, app).listen(httpsPort, "0.0.0.0", () => {
       console.log(`API listening on ${httpsPort} with HTTPS`);
