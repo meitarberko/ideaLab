@@ -9,11 +9,11 @@ import app from "./app";
 import connectMongo from "./mongo";
 
 const port = Number(process.env.PORT || 3000);
-const httpsPort = Number(process.env.HTTPS_PORT || 3443);
+const httpsPort = Number(process.env.HTTPS_PORT || 443);
 
 async function start() {
   await connectMongo();
-  if (process.env.Node_env !== "production") {
+  if (process.env.NODE_ENV !== "production") {
     console.log("development mode");
     http.createServer(app).listen(port, "0.0.0.0", () => {
       console.log(`API listening on ${port} with HTTP`);
