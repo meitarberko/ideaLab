@@ -27,11 +27,11 @@ test("GET /api/auth/google/callback handles failure redirect", async () => {
   expect(res.headers.location).toContain("login");
 });
 
-test("GET /api/auth/google/callback builds url without FRONTEND_URL", async () => {
-  const saved = process.env.FRONTEND_URL;
-  delete process.env.FRONTEND_URL;
+test("GET /api/auth/google/callback builds relative url without api base config", async () => {
+  const saved = process.env.VITE_API_BASE;
+  delete process.env.VITE_API_BASE;
   const res = await request(app).get("/api/auth/google/callback");
   expect(res.status).toBe(302);
   expect(res.headers.location).toBe("/login?token=test-access");
-  if (saved !== undefined) process.env.FRONTEND_URL = saved;
+  if (saved !== undefined) process.env.VITE_API_BASE = saved;
 });

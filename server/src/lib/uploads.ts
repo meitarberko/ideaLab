@@ -24,6 +24,6 @@ export function makeUploader(subFolder: "avatars" | "ideas") {
 }
 
 export function buildPublicUploadUrl(subFolder: "avatars" | "ideas", filename: string) {
-  const publicBase = process.env.PUBLIC_BASE_URL || "";
+  const publicBase = process.env.VITE_API_BASE?.trim()?.replace(/\/api\/?$/, "") || "";
   return `${publicBase}/uploads/${subFolder}/${filename}`;
 }

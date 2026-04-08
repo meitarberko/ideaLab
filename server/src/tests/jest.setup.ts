@@ -8,8 +8,6 @@ process.env.JWT_REFRESH_SECRET ||= "test-refresh-secret";
 process.env.ACCESS_TOKEN_TTL ||= "60m";
 process.env.REFRESH_TOKEN_TTL_DAYS ||= "14";
 process.env.GEMINI_API_KEY ||= "test-gemini-key";
-process.env.PUBLIC_BASE_URL ||= "http://localhost:3001";
-process.env.FRONTEND_URL ||= "http://localhost:5173";
 process.env.UPLOADS_DIR ||= path.join(process.cwd(), "src/tests/.tmp/uploads");
 
 jest.mock("passport", () => {

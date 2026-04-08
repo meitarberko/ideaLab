@@ -1,5 +1,7 @@
 import swaggerJSDoc from "swagger-jsdoc";
 
+const serverPublicUrl = process.env.VITE_API_BASE?.trim()?.replace(/\/api\/?$/, "");
+
 export const swaggerSpec = swaggerJSDoc({
   definition: {
     openapi: "3.0.0",
@@ -50,13 +52,13 @@ export const swaggerSpec = swaggerJSDoc({
             id: "64f1c2b5e4b0f1a2b3c4d5e6",
             username: "janedoe",
             email: "jane@example.com",
-            avatarUrl: "https://cdn.example.com/uploads/avatars/jane.png"
+            avatarUrl: "/uploads/avatars/jane.png"
           }
         }
       }
     },
     security: [{ bearerAuth: [] }],
-    servers: [{ url: "http://localhost:3001" }]
+    ...(serverPublicUrl ? { servers: [{ url: serverPublicUrl }] } : {})
   },
   apis: ["src/routes/*.ts"]
 });

@@ -170,7 +170,7 @@ test("PATCH /api/ideas/:id updates idea and handles permissions", async () => {
   const idea = await Idea.create({
     authorId: new mongoose.Types.ObjectId(reg1.body.user.id),
     text: "old",
-    imageUrl: "http://example.com/old.png"
+    imageUrl: "/uploads/ideas/old.png"
   });
 
   const invalid = await request(app)

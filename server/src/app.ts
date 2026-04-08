@@ -13,6 +13,23 @@ import swaggerJSDoc from "swagger-jsdoc";
 
 const app = express();
 const distPath = path.join(__dirname, "../../client/dist");
+const apiBase = process.env.VITE_API_BASE?.trim();
+const serverPublicUrl = apiBase?.replace(/\/api\/?$/, "");
+const allowedOrigins = serverPublicUrl ? [serverPublicUrl] : [];
+
+const corsOptions: cors.CorsOptions = {
+  origin(origin, callback) {
+    if (!origin || !allowedOrigins.length || allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error(`Not allowed by CORS: ${origin}`));
+  },
+  methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+};
 
 app.use(express.static(distPath));
 
@@ -26,16 +43,8 @@ console.log("check:", typeof apiRouter, typeof notFound, typeof errorHandler);
 setupPassport();
 app.use(passport.initialize());
 
-const allowedOrigins = ["http://localhost:3000", "http://localhost:5173"];
-app.use(
-  cors({
-    origin: allowedOrigins,
-    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true
-  })
-);
-app.options(/.*/, cors({ origin: allowedOrigins, credentials: true }));
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -58,7 +67,7 @@ const swaggerSpec = swaggerJSDoc({
       }
     },
     security: [{ bearerAuth: [] }],
-    servers: [{ url: "http://localhost:3000" }]
+    ...(serverPublicUrl ? { servers: [{ url: serverPublicUrl }] } : {})
   },
   apis: ["./src/routes/**/*.ts"]
 });
