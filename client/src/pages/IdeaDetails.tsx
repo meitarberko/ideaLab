@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TopBar from "../components/TopBar";
-import { api } from "../lib/api";
+import { api, getApiErrorMessage } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import Avatar from "../components/Avatar";
 import { Button } from "../components/Button";
@@ -33,6 +33,7 @@ export default function IdeaDetails() {
   const [author, setAuthor] = useState<UserMini | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const [liked, setLiked] = useState(false);
 
@@ -44,15 +45,52 @@ export default function IdeaDetails() {
   const inFlightRef = useRef(false);
   const lastIdRef = useRef<string | undefined>(undefined);
 
+  const readIdeaPayload = (data: unknown): Idea => {
+    if (!data || typeof data !== "object") {
+      throw new Error("Idea response is invalid");
+    }
+
+    const ideaData = data as Partial<Idea>;
+    if (
+      typeof ideaData.id !== "string" ||
+      typeof ideaData.authorId !== "string" ||
+      typeof ideaData.text !== "string" ||
+      typeof ideaData.createdAt !== "string"
+    ) {
+      throw new Error("Idea response is missing required fields");
+    }
+
+    return {
+      id: ideaData.id,
+      authorId: ideaData.authorId,
+      text: ideaData.text,
+      imageUrl: typeof ideaData.imageUrl === "string" ? ideaData.imageUrl : undefined,
+      createdAt: ideaData.createdAt,
+      updatedAt: typeof ideaData.updatedAt === "string" ? ideaData.updatedAt : ideaData.createdAt,
+      likesCount: typeof ideaData.likesCount === "number" ? ideaData.likesCount : 0,
+      commentsCount: typeof ideaData.commentsCount === "number" ? ideaData.commentsCount : 0,
+      likedByMe: Boolean(ideaData.likedByMe)
+    };
+  };
+
+  const readCommentsPayload = (data: unknown): CommentItem[] => {
+    const items = Array.isArray((data as any)?.items) ? (data as any).items as CommentItem[] : null;
+    if (!items) {
+      throw new Error("Comments response is missing items[]");
+    }
+    return items;
+  };
+
   const loadAll = async () => {
     if (inFlightRef.current) return;
     inFlightRef.current = true;
     try {
       setError(false);
+      setErrorMessage("");
       setLoading(true);
 
       const r = await api.get(`/ideas/${id}`);
-      const it: Idea = r.data;
+      const it = readIdeaPayload(r.data);
 
       setIdea(it);
       setLiked(!!it.likedByMe);
@@ -61,8 +99,10 @@ export default function IdeaDetails() {
       setAuthor(u.data);
 
       await loadComments();
-    } catch {
+    } catch (err) {
+      console.error("Idea details load failed:", err);
       setError(true);
+      setErrorMessage(getApiErrorMessage(err, "Failed to load idea"));
     } finally {
       setLoading(false);
       inFlightRef.current = false;
@@ -73,7 +113,10 @@ export default function IdeaDetails() {
     setCommentsLoading(true);
     try {
       const r = await api.get(`/ideas/${id}/comments`, { params: { limit: 50 } });
-      setComments(r.data.items);
+      setComments(readCommentsPayload(r.data));
+    } catch (err) {
+      console.error("Comments load failed:", err);
+      throw err;
     } finally {
       setCommentsLoading(false);
     }
@@ -136,7 +179,7 @@ export default function IdeaDetails() {
       <>
         <TopBar />
         <div className="container">
-          <ErrorState title="Failed to load idea" />
+          <ErrorState title="Failed to load idea" subtitle={errorMessage} />
         </div>
       </>
     );
