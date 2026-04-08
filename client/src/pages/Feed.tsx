@@ -37,6 +37,16 @@ export default function Feed() {
     usersRef.current = users;
   }, [users]);
 
+  const readFeedPayload = (data: unknown) => {
+    const items = Array.isArray((data as any)?.items) ? (data as any).items as IdeaFeedItem[] : null;
+    if (!items) {
+      throw new Error("Feed response is missing items[]");
+    }
+
+    const nextCursor = typeof (data as any)?.nextCursor === "string" ? (data as any).nextCursor : null;
+    return { items, nextCursor };
+  };
+
   const load = useCallback(
     async (mode: "init" | "more") => {
       if (inFlightRef.current[mode]) return;
@@ -51,8 +61,7 @@ export default function Feed() {
           params: { limit: 10, cursor: mode === "more" ? cursorRef.current : undefined }
         });
 
-        const newItems: IdeaFeedItem[] = r.data.items;
-        const nextCursor: string | null = r.data.nextCursor;
+        const { items: newItems, nextCursor } = readFeedPayload(r.data);
 
         const authorIds = Array.from(new Set(newItems.map((i) => i.authorId)));
         const missing = authorIds.filter((id) => !usersRef.current[id]);
