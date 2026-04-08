@@ -30,7 +30,7 @@ const uploadAvatar = makeUploader("avatars");
  *               id: "64f1c2b5e4b0f1a2b3c4d5e6"
  *               username: "janedoe"
  *               email: "jane@example.com"
- *               avatarUrl: "https://cdn.example.com/uploads/avatars/jane.png"
+ *               avatarUrl: "/uploads/avatars/jane.png"
  *       401:
  *         description: Unauthorized
  *       404:
@@ -89,7 +89,7 @@ const updateSchema = z.object({
  *               id: "64f1c2b5e4b0f1a2b3c4d5e6"
  *               username: "janedoe"
  *               email: "jane@example.com"
- *               avatarUrl: "https://cdn.example.com/uploads/avatars/jane.png"
+ *               avatarUrl: "/uploads/avatars/jane.png"
  *       400:
  *         description: Validation error
  *       401:

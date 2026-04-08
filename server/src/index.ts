@@ -8,7 +8,7 @@ dotenv.config({ path: path.resolve(__dirname, "../.env") });
 import app from "./app";
 import connectMongo from "./mongo";
 
-const port = Number(process.env.PORT || 3000);
+const port = Number(process.env.PORT || 80);
 const httpsPort = Number(process.env.HTTPS_PORT || 443);
 
 async function start() {

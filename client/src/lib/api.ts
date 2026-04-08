@@ -1,6 +1,7 @@
 import axios from "axios";
 
-export const API_BASE = "http://127.0.0.1:5173/api";
+const rawApiBase = (import.meta as any).env?.VITE_API_BASE?.trim();
+export const API_BASE = (rawApiBase || "/api").replace(/\/+$/, "");
 
 export const api = axios.create({
   baseURL: API_BASE,
