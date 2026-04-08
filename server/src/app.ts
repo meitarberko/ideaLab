@@ -76,7 +76,7 @@ app.use("/uploads", express.static(uploadsDir));
 
 app.use("/api", apiRouter);
 
-app.get("/{*any}", (req, res) => {
+app.get(/.*/, (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });
 
