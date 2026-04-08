@@ -1,7 +1,7 @@
 import { useState } from "react";
 import TopBar from "../components/TopBar";
 import { Button } from "../components/Button";
-import { api, getApiErrorMessage } from "../lib/api";
+import { api } from "../lib/api";
 import { useNavigate } from "react-router-dom";
 
 export default function CreateIdea() {
@@ -29,7 +29,7 @@ export default function CreateIdea() {
       nav(`/ideas/${createdId}`);
     } catch (err) {
       console.error("Create idea failed:", err);
-      setErr(getApiErrorMessage(err, "Failed to publish"));
+      setErr(err instanceof Error ? err.message : "Failed to publish");
     } finally {
       setLoading(false);
     }
