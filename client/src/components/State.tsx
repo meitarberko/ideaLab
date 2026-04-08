@@ -15,11 +15,10 @@ export function EmptyState({ title, subtitle }: { title: string; subtitle?: stri
   );
 }
 
-export function ErrorState({ title, subtitle }: { title: string; subtitle?: string }) {
+export function ErrorState({ title }: { title: string }) {
   return (
     <div className="card" style={{ padding: 18 }}>
       <div style={{ fontWeight: 900, color: "var(--danger)" }}>{title}</div>
-      {subtitle && <div style={{ marginTop: 6, color: "rgba(0,0,0,0.7)" }}>{subtitle}</div>}
     </div>
   );
 }

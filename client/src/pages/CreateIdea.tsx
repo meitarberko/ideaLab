@@ -1,7 +1,7 @@
 import { useState } from "react";
 import TopBar from "../components/TopBar";
 import { Button } from "../components/Button";
-import { api } from "../lib/api";
+import { api, getApiErrorMessage } from "../lib/api";
 import { useNavigate } from "react-router-dom";
 
 export default function CreateIdea() {
@@ -22,9 +22,14 @@ export default function CreateIdea() {
       if (image) fd.append("image", image);
 
       const r = await api.post("/ideas", fd, { headers: { "Content-Type": "multipart/form-data" } });
-      nav(`/ideas/${r.data.id}`);
-    } catch {
-      setErr("Failed to publish");
+      const createdId = typeof r.data?.id === "string" ? r.data.id : "";
+      if (!createdId) {
+        throw new Error("Create idea response is missing id");
+      }
+      nav(`/ideas/${createdId}`);
+    } catch (err) {
+      console.error("Create idea failed:", err);
+      setErr(getApiErrorMessage(err, "Failed to publish"));
     } finally {
       setLoading(false);
     }

@@ -88,29 +88,6 @@ export function getAccessToken() {
   return localStorage.getItem("accessToken") || "";
 }
 
-export function getApiErrorMessage(error: unknown, fallback = "Request failed") {
-  if (axios.isAxiosError(error)) {
-    const status = error.response?.status;
-    const data = error.response?.data;
-    const serverMessage =
-      (typeof data?.message === "string" && data.message) ||
-      (typeof data?.error === "string" && data.error) ||
-      (typeof data === "string" && data) ||
-      "";
-
-    if (serverMessage && status) return `${serverMessage} (${status})`;
-    if (serverMessage) return serverMessage;
-    if (status) return `${fallback} (${status})`;
-    if (error.message) return error.message;
-  }
-
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  return fallback;
-}
-
 export async function apiFetch<T>(
   path: string,
   options: RequestInit = {}
