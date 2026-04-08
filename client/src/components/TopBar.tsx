@@ -23,21 +23,24 @@ export default function TopBar() {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: 12,
+          gap: 16,
           flexWrap: "nowrap",
           overflow: "hidden"
         }}
       >
         <div
-          style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", flex: "0 1 auto", minWidth: 0 }}
+          style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", flex: "0 0 auto", minWidth: 0 }}
           onClick={() => nav("/feed")}
         >
           <img src={LabIcon} style={{ height: 36, flexShrink: 0 }} />
           <div style={{ fontWeight: 900, whiteSpace: "nowrap" }}>IdeaLab</div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "1 1 auto", justifyContent: "flex-end", minWidth: 0 }}>
+        <div style={{ display: "flex", justifyContent: "center", flex: "1 1 auto", minWidth: 0 }}>
           <Button variant="secondary" onClick={() => nav("/ideas/new")}>New Idea</Button>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flex: "0 1 auto", minWidth: 0, marginLeft: "auto" }}>
           <div
             style={{
               display: "flex",
@@ -45,8 +48,7 @@ export default function TopBar() {
               gap: 8,
               cursor: "pointer",
               minWidth: 0,
-              flex: "1 1 auto",
-              maxWidth: 220
+              maxWidth: 180
             }}
             onClick={() => nav("/profile/me")}
           >
@@ -64,7 +66,7 @@ export default function TopBar() {
               {displayName}
             </div>
           </div>
-          <Button variant="ghost" onClick={logout} style={{ flexShrink: 0, paddingInline: 14 }}>
+          <Button variant="ghost" onClick={logout} style={{ flexShrink: 0, paddingInline: 12 }}>
             Logout
           </Button>
         </div>
