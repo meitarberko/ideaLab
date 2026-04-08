@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import TopBar from "../components/TopBar";
-import { api, getApiErrorMessage } from "../lib/api";
+import { api } from "../lib/api";
 import type { IdeaFeedItem } from "../types";
 import IdeaCard from "../components/IdeaCard";
 import { EmptyState, ErrorState, LoadingState } from "../components/State";
@@ -18,7 +18,6 @@ export default function Feed() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
 
   const [users, setUsers] = useState<Record<string, UserMini>>({});
 
@@ -53,7 +52,6 @@ export default function Feed() {
       inFlightRef.current[mode] = true;
       try {
         setError(false);
-        setErrorMessage("");
         if (mode === "init") setLoading(true);
         if (mode === "more") setLoadingMore(true);
 
@@ -77,10 +75,8 @@ export default function Feed() {
         setUsers(nextUsers);
         setItems((prev) => (mode === "init" ? newItems : [...prev, ...newItems]));
         setCursor(nextCursor);
-      } catch (err) {
-        console.error("Feed load failed:", err);
+      } catch {
         setError(true);
-        setErrorMessage(getApiErrorMessage(err, "Failed to load feed"));
       } finally {
         setLoading(false);
         setLoadingMore(false);
@@ -135,7 +131,7 @@ export default function Feed() {
       <>
         <TopBar />
         <div className="container">
-          <ErrorState title="Failed to load feed" subtitle={errorMessage} />
+          <ErrorState title="Failed to load feed" />
         </div>
       </>
     );
