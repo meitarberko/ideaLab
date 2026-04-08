@@ -33,10 +33,6 @@ const corsOptions: cors.CorsOptions = {
 
 app.use(express.static(distPath));
 
-app.get("/{*any}", (req, res) => {
-  res.sendFile(path.join(distPath, "index.html"));
-});
-
 console.log("check:", typeof apiRouter, typeof notFound, typeof errorHandler);
 
 
@@ -79,6 +75,10 @@ const uploadsDir = process.env.UPLOADS_DIR || path.join(process.cwd(), "uploads"
 app.use("/uploads", express.static(uploadsDir));
 
 app.use("/api", apiRouter);
+
+app.get("/{*any}", (req, res) => {
+  res.sendFile(path.join(distPath, "index.html"));
+});
 
 app.use(notFound);
 app.use(errorHandler);
