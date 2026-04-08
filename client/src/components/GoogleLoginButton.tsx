@@ -98,7 +98,15 @@ export function GoogleLoginButton() {
 
   // ✅ אין onClick ואין prompt — הכפתור של Google מטפל בהכל
   return (
-    <div style={{ opacity: loading ? 0.7 : 1, pointerEvents: loading ? "none" : "auto" }}>
+    <div
+      style={{
+        opacity: loading ? 0.7 : 1,
+        pointerEvents: loading ? "none" : "auto",
+        direction: "ltr",
+        display: "flex",
+        justifyContent: "center"
+      }}
+    >
       <div ref={btnRef} />
     </div>
   );
