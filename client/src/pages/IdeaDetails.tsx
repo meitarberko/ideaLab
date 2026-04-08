@@ -40,10 +40,53 @@ export default function IdeaDetails() {
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [commentText, setCommentText] = useState("");
   const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const [commentError, setCommentError] = useState("");
 
   const [analyzerOpen, setAnalyzerOpen] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(false);
   const inFlightRef = useRef(false);
   const lastIdRef = useRef<string | undefined>(undefined);
+  const actionsRef = useRef<HTMLDivElement | null>(null);
+  const actionButtonStyle = {
+    minWidth: 0,
+    padding: "9px 12px",
+    borderRadius: 12,
+    fontSize: 13,
+    lineHeight: 1.1,
+    boxShadow: "none",
+    justifyContent: "flex-start"
+  } as const;
+  const triggerButtonStyle = {
+    minWidth: 40,
+    padding: "8px 12px",
+    borderRadius: 999,
+    fontSize: 16,
+    lineHeight: 1,
+    boxShadow: "none"
+  } as const;
+  const iconButtonStyle = {
+    minWidth: 42,
+    padding: "9px 12px",
+    borderRadius: 999,
+    fontSize: 16,
+    lineHeight: 1,
+    boxShadow: "none",
+    border: liked ? "1px solid rgba(58, 62, 140, 0.22)" : "1px solid rgba(58, 62, 140, 0.12)",
+    background: liked ? "rgba(58, 62, 140, 0.12)" : "#fff"
+  } as const;
+  const analyzeButtonStyle = {
+    minWidth: 0,
+    padding: "10px 14px",
+    borderRadius: 999,
+    fontSize: 13,
+    fontWeight: 800,
+    lineHeight: 1.1,
+    boxShadow: "none",
+    border: "1px solid rgba(58, 62, 140, 0.14)",
+    background: "#fff",
+    color: "var(--secondary)"
+  } as const;
 
   const readIdeaPayload = (data: unknown): Idea => {
     if (!data || typeof data !== "object") {
@@ -129,6 +172,19 @@ export default function IdeaDetails() {
     loadAll();
   }, [id]);
 
+  useEffect(() => {
+    if (!actionsOpen) return;
+
+    const onPointerDown = (event: MouseEvent) => {
+      if (!actionsRef.current?.contains(event.target as Node)) {
+        setActionsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [actionsOpen]);
+
   const canEdit = idea?.authorId === user?.id;
 
   const toggleLike = async () => {
@@ -148,19 +204,46 @@ export default function IdeaDetails() {
   const addComment = async () => {
     if (!idea) return;
     const text = commentText.trim();
-    if (!text) return;
+    if (!text || commentSubmitting) return;
 
-    await api.post(`/ideas/${idea.id}/comments`, { text });
-    setCommentText("");
-    await loadComments();
-    setIdea({ ...idea, commentsCount: idea.commentsCount + 1 });
+    try {
+      setCommentSubmitting(true);
+      setCommentError("");
+
+      const response = await api.post(`/ideas/${idea.id}/comments`, { text });
+      const newCommentId = typeof response.data?.id === "string" ? response.data.id : `temp-${Date.now()}`;
+
+      setComments((prev) => [
+        {
+          id: newCommentId,
+          ideaId: idea.id,
+          authorId: user?.id || "",
+          text,
+          createdAt: new Date().toISOString()
+        },
+        ...prev
+      ]);
+      setCommentText("");
+      setIdea({ ...idea, commentsCount: idea.commentsCount + 1 });
+    } catch (err) {
+      console.error("Add comment failed:", err);
+      setCommentError(getApiErrorMessage(err, "Failed to add comment"));
+    } finally {
+      setCommentSubmitting(false);
+    }
   };
 
   const deleteComment = async (commentId: string) => {
     if (!idea) return;
     await api.delete(`/comments/${commentId}`);
-    await loadComments();
+    setComments((prev) => prev.filter((c) => c.id !== commentId));
     setIdea({ ...idea, commentsCount: Math.max(0, idea.commentsCount - 1) });
+  };
+
+  const deleteIdea = async () => {
+    if (!idea) return;
+    await api.delete(`/ideas/${idea.id}`);
+    nav("/feed");
   };
 
   if (loading) {
@@ -192,21 +275,80 @@ export default function IdeaDetails() {
         <div className="card" style={{ padding: 16 }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
             <div
-              style={{ display: "flex", gap: 10, alignItems: "center", cursor: "pointer" }}
+              style={{ display: "flex", gap: 10, alignItems: "center", cursor: "pointer", minWidth: 0, flex: "1 1 auto" }}
               onClick={() => nav(`/profile/${author.id}`)}
             >
               <Avatar url={author.avatarUrl} size={44} />
-              <div>
-                <div style={{ fontWeight: 900 }}>{author.username}</div>
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    fontWeight: 900,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap"
+                  }}
+                  title={author.username}
+                >
+                  {author.username}
+                </div>
                 <div style={{ fontSize: 12, color: "rgba(0,0,0,0.6)" }}>{new Date(idea.createdAt).toLocaleString()}</div>
               </div>
             </div>
 
             {canEdit && (
-              <div style={{ display: "flex", gap: 8 }}>
-                <Button variant="secondary" onClick={() => nav(`/ideas/${idea.id}/edit`)}>
-                  Edit
+              <div ref={actionsRef} style={{ position: "relative" }}>
+                <Button
+                  variant="ghost"
+                  onClick={() => setActionsOpen((open) => !open)}
+                  style={triggerButtonStyle}
+                  aria-label="More actions"
+                  title="More actions"
+                >
+                  ...
                 </Button>
+                {actionsOpen && (
+                  <div
+                    className="card"
+                    style={{
+                      position: "absolute",
+                      top: "calc(100% + 8px)",
+                      right: 0,
+                      minWidth: 140,
+                      padding: 8,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 6,
+                      zIndex: 20,
+                      boxShadow: "0 14px 32px rgba(19, 27, 84, 0.12)"
+                    }}
+                  >
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setActionsOpen(false);
+                        nav(`/ideas/${idea.id}/edit`);
+                      }}
+                      style={{ ...actionButtonStyle, color: "var(--secondary)" }}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={async () => {
+                        setActionsOpen(false);
+                        await deleteIdea();
+                      }}
+                      style={{
+                        ...actionButtonStyle,
+                        background: "#fff",
+                        color: "var(--danger)",
+                        border: "1px solid rgba(211,47,47,0.18)"
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -220,16 +362,31 @@ export default function IdeaDetails() {
             />
           )}
 
-          <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div
+            style={{
+              marginTop: 12,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 12,
+              flexWrap: "wrap"
+            }}
+          >
             <div style={{ display: "flex", gap: 14, fontWeight: 900 }}>
               <div>Likes: {idea.likesCount}</div>
               <div>Comments: {idea.commentsCount}</div>
             </div>
             <div style={{ display: "flex", gap: 10 }}>
-              <Button variant={liked ? "secondary" : "primary"} onClick={toggleLike}>
-                {liked ? "Unlike" : "Like"}
+              <Button
+                variant="ghost"
+                onClick={toggleLike}
+                style={iconButtonStyle}
+                title={liked ? "Unlike" : "Like"}
+                aria-label={liked ? "Unlike" : "Like"}
+              >
+                👍
               </Button>
-              <Button variant="primary" onClick={() => setAnalyzerOpen(true)}>
+              <Button variant="ghost" onClick={() => setAnalyzerOpen(true)} style={analyzeButtonStyle}>
                 Analyze
               </Button>
             </div>
@@ -246,7 +403,25 @@ export default function IdeaDetails() {
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
             />
-            <Button disabled={!commentText.trim()} onClick={addComment}>
+            {commentError && <div style={{ color: "var(--danger)", fontSize: 13, fontWeight: 700 }}>{commentError}</div>}
+            <Button
+              variant="ghost"
+              disabled={!commentText.trim()}
+              loading={commentSubmitting}
+              onClick={addComment}
+              style={{
+                minWidth: 0,
+                padding: "12px 18px",
+                borderRadius: 999,
+                fontSize: 14,
+                fontWeight: 700,
+                lineHeight: 1.1,
+                boxShadow: "none",
+                border: "1px solid rgba(58, 62, 140, 0.14)",
+                background: "#fff",
+                color: "var(--secondary)"
+              }}
+            >
               Add Comment
             </Button>
           </div>
@@ -262,7 +437,22 @@ export default function IdeaDetails() {
                     {new Date(c.createdAt).toLocaleString()}
                   </div>
                   {c.authorId === user?.id && (
-                    <button className="btn btn-danger" onClick={() => deleteComment(c.id)}>
+                    <button
+                      className="btn btn-ghost"
+                      onClick={() => deleteComment(c.id)}
+                      style={{
+                        minWidth: 0,
+                        padding: "8px 14px",
+                        borderRadius: 999,
+                        fontSize: 13,
+                        fontWeight: 700,
+                        lineHeight: 1.1,
+                        boxShadow: "none",
+                        background: "#fff",
+                        color: "var(--danger)",
+                        border: "1px solid rgba(211,47,47,0.18)"
+                      }}
+                    >
                       Delete
                     </button>
                   )}

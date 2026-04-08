@@ -120,19 +120,62 @@ export default function Profile({ mode }: { mode: "me" | "user" }) {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            gap: 12,
+            gap: 14,
+            flexWrap: "wrap"
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, flex: "1 1 320px" }}>
             <Avatar url={profile.avatarUrl} size={56} />
-            <div>
-              <div style={{ fontWeight: 900, fontSize: 20 }}>{profile.username}</div>
-              <div style={{ fontSize: 12, color: "rgba(0,0,0,0.6)", fontWeight: 900 }}>{profile.email}</div>
+            <div style={{ minWidth: 0 }}>
+              <div
+                style={{
+                  fontWeight: 900,
+                  fontSize: 20,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  maxWidth: 260
+                }}
+                title={profile.username}
+              >
+                {profile.username}
+              </div>
+              <div
+                style={{
+                  fontSize: 12,
+                  color: "rgba(0,0,0,0.6)",
+                  fontWeight: 700,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  maxWidth: 320
+                }}
+                title={profile.email}
+              >
+                {profile.email}
+              </div>
             </div>
           </div>
 
           {isMe && (
-            <Button variant="secondary" onClick={() => nav("/profile/me/edit")}>
+            <Button
+              variant="ghost"
+              onClick={() => nav("/profile/me/edit")}
+              style={{
+                flexShrink: 0,
+                minWidth: 0,
+                padding: "10px 16px",
+                borderRadius: 999,
+                fontSize: 14,
+                fontWeight: 700,
+                lineHeight: 1.1,
+                boxShadow: "none",
+                border: "1px solid rgba(58, 62, 140, 0.14)",
+                background: "#fff",
+                color: "var(--secondary)",
+                marginInlineStart: "auto"
+              }}
+            >
               Edit Profile
             </Button>
           )}
