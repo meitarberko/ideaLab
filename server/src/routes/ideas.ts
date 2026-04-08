@@ -207,6 +207,20 @@ router.get("/mine", requireAuth, async (req: Request, res: Response) => {
   const ideas = await Idea.find(query).sort({ createdAt: -1 }).limit(limit + 1).lean();
   const items = ideas.slice(0, limit);
   const nextCursor = ideas.length > limit ? items[items.length - 1].createdAt.toISOString() : null;
+  const ideaIds = items.map((i) => i._id);
+
+  const likesAgg = await Like.aggregate([
+    { $match: { ideaId: { $in: ideaIds } } },
+    { $group: { _id: "$ideaId", count: { $sum: 1 } } }
+  ]);
+
+  const commentsAgg = await Comment.aggregate([
+    { $match: { ideaId: { $in: ideaIds } } },
+    { $group: { _id: "$ideaId", count: { $sum: 1 } } }
+  ]);
+
+  const likesMap = new Map<string, number>(likesAgg.map((x: any) => [String(x._id), x.count]));
+  const commentsMap = new Map<string, number>(commentsAgg.map((x: any) => [String(x._id), x.count]));
 
   res.json({
     items: items.map((i: any) => ({
@@ -214,7 +228,9 @@ router.get("/mine", requireAuth, async (req: Request, res: Response) => {
       authorId: String(i.authorId),
       text: i.text,
       imageUrl: i.imageUrl,
-      createdAt: i.createdAt
+      createdAt: i.createdAt,
+      likesCount: likesMap.get(String(i._id)) || 0,
+      commentsCount: commentsMap.get(String(i._id)) || 0
     })),
     nextCursor
   });

@@ -6,4 +6,5 @@ export type IdeaFeedItem = {
   createdAt: string;
   likesCount: number;
   commentsCount: number;
+  likedByMe?: boolean;
 };
