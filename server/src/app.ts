@@ -4,6 +4,7 @@ import path from "path";
 import apiRouter from "./routes";
 import notFound from "./middleware/notFound";
 import errorHandler from "./middleware/errorHandler";
+import { optionalAuth } from "./middleware/optionalAuth";
 import cookieParser from "cookie-parser";
 import passport from "passport";
 import cors from "cors";
@@ -45,6 +46,7 @@ app.options(/.*/, cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(optionalAuth);
 
 const swaggerSpec = swaggerJSDoc({
   definition: {
