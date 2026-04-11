@@ -3,6 +3,7 @@ import { requireAuth, AuthedRequest } from "../middleware/requireAuth";
 import { Comment } from "../models/Comment";
 import { Idea } from "../models/Idea";
 import { User } from "../models/User";
+import { User } from "../models/User";
 import { z } from "zod";
 import { Types } from "mongoose";
 
@@ -129,12 +130,17 @@ router.get(
     const authorIds = Array.from(new Set(items.map((c) => String(c.authorId))));
     const users = await User.find({ _id: { $in: authorIds } }).select("username avatarUrl").lean();
     const usersMap = new Map(users.map((u) => [String(u._id), u]));
+    const authorIds = Array.from(new Set(items.map((c) => String(c.authorId))));
+    const users = await User.find({ _id: { $in: authorIds } }).select("username avatarUrl").lean();
+    const usersMap = new Map(users.map((u) => [String(u._id), u]));
 
     res.json({
       items: items.map((c) => ({
         id: String(c._id),
         ideaId: String(c.ideaId),
         authorId: String(c.authorId),
+        authorUsername: usersMap.get(String(c.authorId))?.username || "Unknown",
+        authorAvatarUrl: usersMap.get(String(c.authorId))?.avatarUrl,
         authorUsername: usersMap.get(String(c.authorId))?.username || "Unknown",
         authorAvatarUrl: usersMap.get(String(c.authorId))?.avatarUrl,
         text: c.text,

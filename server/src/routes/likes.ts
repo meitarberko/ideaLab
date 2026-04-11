@@ -3,6 +3,7 @@ import { requireAuth, AuthedRequest } from "../middleware/requireAuth";
 import { Like } from "../models/Like";
 import { Idea } from "../models/Idea";
 import { User } from "../models/User";
+import { User } from "../models/User";
 import mongoose from "mongoose";
 
 const router = Router({ mergeParams: true });
@@ -112,3 +113,4 @@ router.delete("/", requireAuth, async (req: AuthedRequest, res) => {
 });
 
 export default router;
+

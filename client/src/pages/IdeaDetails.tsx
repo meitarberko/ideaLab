@@ -6,6 +6,7 @@ import { useAuth } from "../lib/auth";
 import Avatar from "../components/Avatar";
 import { Button } from "../components/Button";
 import IdeaAnalyzerModal from "../components/IdeaAnalyzerModal";
+import LikersModal from "../components/LikersModal";
 import { LoadingState, ErrorState, EmptyState } from "../components/State";
 
 type Idea = {
@@ -22,7 +23,15 @@ type Idea = {
 
 type UserMini = { id: string; username: string; avatarUrl?: string };
 
-type CommentItem = { id: string; ideaId: string; authorId: string; text: string; createdAt: string };
+type CommentItem = {
+  id: string;
+  ideaId: string;
+  authorId: string;
+  authorUsername?: string;
+  authorAvatarUrl?: string;
+  text: string;
+  createdAt: string;
+};
 
 export default function IdeaDetails() {
   const { id } = useParams();
@@ -42,6 +51,7 @@ export default function IdeaDetails() {
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentSubmitting, setCommentSubmitting] = useState(false);
   const [commentError, setCommentError] = useState("");
+  const [likersOpen, setLikersOpen] = useState(false);
 
   const [analyzerOpen, setAnalyzerOpen] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
@@ -218,6 +228,8 @@ export default function IdeaDetails() {
           id: newCommentId,
           ideaId: idea.id,
           authorId: user?.id || "",
+          authorUsername: user?.username || response.data?.authorUsername || "You",
+          authorAvatarUrl: user?.avatarUrl || response.data?.authorAvatarUrl,
           text,
           createdAt: new Date().toISOString()
         },
@@ -372,8 +384,14 @@ export default function IdeaDetails() {
               flexWrap: "wrap"
             }}
           >
-            <div style={{ display: "flex", gap: 14, fontWeight: 900 }}>
-              <div>Likes: {idea.likesCount}</div>
+            <div style={{ display: "flex", gap: 14, fontWeight: 900, flexWrap: "wrap" }}>
+              <button
+                className="btn btn-ghost"
+                onClick={() => setLikersOpen(true)}
+                style={{ minWidth: 0, padding: 0, boxShadow: "none", fontWeight: 900 }}
+              >
+                Likes: {idea.likesCount}
+              </button>
               <div>Comments: {idea.commentsCount}</div>
             </div>
             <div style={{ display: "flex", gap: 10 }}>
@@ -433,8 +451,14 @@ export default function IdeaDetails() {
             {comments.map((c) => (
               <div key={c.id} className="card" style={{ padding: 12, background: "var(--bg)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                  <div style={{ fontSize: 12, color: "rgba(0,0,0,0.6)", fontWeight: 900 }}>
-                    {new Date(c.createdAt).toLocaleString()}
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <Avatar url={c.authorAvatarUrl} size={34} />
+                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      <div style={{ fontSize: 13, fontWeight: 900 }}>{c.authorUsername || "Unknown"}</div>
+                      <div style={{ fontSize: 12, color: "rgba(0,0,0,0.6)", fontWeight: 700 }}>
+                        {new Date(c.createdAt).toLocaleString()}
+                      </div>
+                    </div>
                   </div>
                   {c.authorId === user?.id && (
                     <button
@@ -465,11 +489,14 @@ export default function IdeaDetails() {
       </div>
 
       {idea && (
-        <IdeaAnalyzerModal
-          open={analyzerOpen}
-          ideaId={idea.id}
-          onClose={() => setAnalyzerOpen(false)}
-        />
+        <>
+          <IdeaAnalyzerModal
+            open={analyzerOpen}
+            ideaId={idea.id}
+            onClose={() => setAnalyzerOpen(false)}
+          />
+          <LikersModal open={likersOpen} ideaId={idea.id} onClose={() => setLikersOpen(false)} />
+        </>
       )}
     </>
   );

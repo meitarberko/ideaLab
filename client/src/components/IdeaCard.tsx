@@ -4,6 +4,7 @@ import Avatar from "./Avatar";
 import { Button } from "./Button";
 import type { IdeaFeedItem } from "../types";
 import { api } from "../lib/api";
+import LikersModal from "./LikersModal";
 
 export default function IdeaCard({
   idea,
@@ -24,6 +25,7 @@ export default function IdeaCard({
   const [liked, setLiked] = useState(Boolean(idea.likedByMe));
   const [likesCount, setLikesCount] = useState(idea.likesCount);
   const [likeLoading, setLikeLoading] = useState(false);
+  const [likersOpen, setLikersOpen] = useState(false);
 
   const short = idea.text.length > 220 ? idea.text.slice(0, 220) + "..." : idea.text;
 
@@ -220,7 +222,16 @@ export default function IdeaCard({
             title={liked ? "Unlike" : "Like"}
             aria-label={liked ? "Unlike" : "Like"}
           >
-            👍 {likesCount ?? 0}
+            👍
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => setLikersOpen(true)}
+            style={statButtonStyle}
+            title="See who liked"
+            aria-label="See who liked"
+          >
+            Likes {likesCount ?? 0}
           </Button>
           <Button
             variant="ghost"
@@ -236,6 +247,7 @@ export default function IdeaCard({
           View
         </Button>
       </div>
+      <LikersModal open={likersOpen} ideaId={idea.id} onClose={() => setLikersOpen(false)} />
     </div>
   );
 }
