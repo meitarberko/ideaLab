@@ -4,6 +4,7 @@ import { Button } from "../components/Button";
 import Avatar from "./Avatar";
 import { useAuth } from "../lib/auth";
 import LabIcon from "../images/LabIcon.png";
+import NotificationsMenu from "./NotificationsMenu";
 
 export default function TopBar() {
   const nav = useNavigate();
@@ -38,6 +39,7 @@ export default function TopBar() {
 
         <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
           <Button variant="secondary" onClick={() => nav("/ideas/new")} style={topButtonStyle}>New Idea</Button>
+          <NotificationsMenu />
           <div
             style={{
               display: "flex",

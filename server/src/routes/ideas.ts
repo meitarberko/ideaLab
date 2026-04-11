@@ -17,6 +17,13 @@ import mongoose from "mongoose";
 const router = Router();
 const uploadIdeaImage = makeUploader("ideas");
 
+function getViewerUserId(req: Request) {
+  const user = (req as AuthedRequest).user as
+    | { userId?: string; id?: string }
+    | undefined;
+  return user?.userId || user?.id;
+}
+
 function requireText(req: any, res: any, next: any) {
   const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
   if (!text) return res.status(400).json({ message: "text is required" });
@@ -147,7 +154,7 @@ router.get("/", async (req, res) => {
   const likesMap = new Map<string, number>(likesAgg.map((x: any) => [String(x._id), x.count]));
   const commentsMap = new Map<string, number>(commentsAgg.map((x: any) => [String(x._id), x.count]));
 
-  const viewerUserId = (req as AuthedRequest).user?.userId;
+  const viewerUserId = getViewerUserId(req);
   let likedSet = new Set<string>();
 
   if (viewerUserId) {
@@ -221,7 +228,7 @@ router.get("/mine", requireAuth, async (req: Request, res: Response) => {
 
   const likesMap = new Map<string, number>(likesAgg.map((x: any) => [String(x._id), x.count]));
   const commentsMap = new Map<string, number>(commentsAgg.map((x: any) => [String(x._id), x.count]));
-  const viewerUserId = authed.user!.userId;
+  const viewerUserId = getViewerUserId(req) || authed.user!.userId;
   let likedSet = new Set<string>();
 
   if (viewerUserId) {
@@ -271,7 +278,7 @@ router.get("/:id", validateParams(ideaIdParamsSchema), async (req, res) => {
   const commentsCount = await Comment.countDocuments({ ideaId: idea._id });
 
   let likedByMe = false;
-  const viewerUserId = (req as AuthedRequest).user?.userId;
+  const viewerUserId = getViewerUserId(req);
   if (viewerUserId) {
     const exists = await Like.findOne({ ideaId: idea._id, userId: viewerUserId }).lean();
     likedByMe = !!exists;

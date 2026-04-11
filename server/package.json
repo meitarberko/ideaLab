@@ -9,7 +9,7 @@
     "start": "NODE_ENV=production node dist/index.js",
     "start:dev": "NODE_ENV=development node dist/index.js",
     "test": "jest --runInBand",
-    "coverage": "jest --coverage",
+    "coverage": "jest --runInBand --coverage",
     "test:watch": "jest --watch",
     "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
     "lint:fix": "npm run lint -- --fix",
