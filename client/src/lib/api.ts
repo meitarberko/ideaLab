@@ -8,6 +8,11 @@ export const api = axios.create({
   withCredentials: true
 });
 
+const bootToken = typeof localStorage !== "undefined" ? localStorage.getItem("accessToken") : null;
+if (bootToken) {
+  api.defaults.headers.common.Authorization = `Bearer ${bootToken}`;
+}
+
 const isDev = Boolean((import.meta as any).env?.DEV);
 const spamWindowMs = 5000;
 const spamLimit = 10;

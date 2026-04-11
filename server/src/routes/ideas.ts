@@ -147,7 +147,7 @@ router.get("/", async (req, res) => {
   const likesMap = new Map<string, number>(likesAgg.map((x: any) => [String(x._id), x.count]));
   const commentsMap = new Map<string, number>(commentsAgg.map((x: any) => [String(x._id), x.count]));
 
-  const viewerUserId = (req as any).user?.id;
+  const viewerUserId = (req as AuthedRequest).user?.userId;
   let likedSet = new Set<string>();
 
   if (viewerUserId) {
@@ -221,6 +221,14 @@ router.get("/mine", requireAuth, async (req: Request, res: Response) => {
 
   const likesMap = new Map<string, number>(likesAgg.map((x: any) => [String(x._id), x.count]));
   const commentsMap = new Map<string, number>(commentsAgg.map((x: any) => [String(x._id), x.count]));
+  const viewerUserId = authed.user!.userId;
+  let likedSet = new Set<string>();
+
+  if (viewerUserId) {
+    const ids = items.map((d: any) => String(d._id));
+    const likes = await Like.find({ userId: viewerUserId, ideaId: { $in: ids } }).select("ideaId").lean();
+    likedSet = new Set(likes.map((l: any) => String(l.ideaId)));
+  }
 
   res.json({
     items: items.map((i: any) => ({
@@ -230,7 +238,8 @@ router.get("/mine", requireAuth, async (req: Request, res: Response) => {
       imageUrl: i.imageUrl,
       createdAt: i.createdAt,
       likesCount: likesMap.get(String(i._id)) || 0,
-      commentsCount: commentsMap.get(String(i._id)) || 0
+      commentsCount: commentsMap.get(String(i._id)) || 0,
+      likedByMe: likedSet.has(String(i._id))
     })),
     nextCursor
   });
@@ -262,8 +271,9 @@ router.get("/:id", validateParams(ideaIdParamsSchema), async (req, res) => {
   const commentsCount = await Comment.countDocuments({ ideaId: idea._id });
 
   let likedByMe = false;
-  if ((req as any).user?.id) {
-    const exists = await Like.findOne({ ideaId: idea._id, userId: (req as any).user.id }).lean();
+  const viewerUserId = (req as AuthedRequest).user?.userId;
+  if (viewerUserId) {
+    const exists = await Like.findOne({ ideaId: idea._id, userId: viewerUserId }).lean();
     likedByMe = !!exists;
   }
 
