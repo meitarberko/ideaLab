@@ -1,14 +1,15 @@
-import { Router } from "express";
+import { Router, Request } from "express";
 import { requireAuth, AuthedRequest } from "../middleware/requireAuth";
 import { Like } from "../models/Like";
 import { Idea } from "../models/Idea";
+import { User } from "../models/User";
 import { User } from "../models/User";
 import mongoose from "mongoose";
 
 const router = Router({ mergeParams: true });
 
-router.get("/", async (req: AuthedRequest, res) => {
-  const { id } = req.params as { id: string };
+router.get("/", async (req: Request<{ id: string }>, res) => {
+  const { id } = req.params;
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return res.status(400).json({ message: "Invalid idea id" });
   }
@@ -27,9 +28,11 @@ router.get("/", async (req: AuthedRequest, res) => {
         const user = usersMap.get(String(like.userId));
         if (!user) return null;
         return {
-          id: String(user._id),
+          id: String(like._id),
+          userId: String(like.userId),
           username: user.username,
-          avatarUrl: user.avatarUrl
+          avatarUrl: user.avatarUrl,
+          createdAt: like.createdAt
         };
       })
       .filter(Boolean)
@@ -110,3 +113,4 @@ router.delete("/", requireAuth, async (req: AuthedRequest, res) => {
 });
 
 export default router;
+

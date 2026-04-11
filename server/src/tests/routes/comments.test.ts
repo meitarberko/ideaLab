@@ -47,6 +47,7 @@ test("POST /api/ideas/:id/comments validates input and auth", async () => {
     .set(authHeader(reg.body.accessToken))
     .send({ text: "nice" });
   expect(ok.status).toBe(201);
+  expect(ok.body.authorUsername).toBe("u1");
 });
 
 test("GET /api/ideas/:id/comments lists comments", async () => {
@@ -66,6 +67,7 @@ test("GET /api/ideas/:id/comments lists comments", async () => {
   const res = await request(app).get(`/api/ideas/${idea._id.toString()}/comments?limit=1`);
   expect(res.status).toBe(200);
   expect(res.body.items.length).toBe(1);
+  expect(res.body.items[0].authorUsername).toBe("u2");
   expect(res.body.nextCursor).toBeTruthy();
 });
 

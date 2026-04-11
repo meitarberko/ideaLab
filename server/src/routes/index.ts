@@ -5,6 +5,7 @@ import usersRouter from "./users";
 import ideasRouter from "./ideas";
 import commentsRoot from "./commentsRoot";
 import swaggerRouter from "./swagger";
+import notificationsRouter from "./notifications";
 
 
 dotenv.config();
@@ -18,6 +19,7 @@ apiRouter.use("/auth", authRouter);
 apiRouter.use("/users", usersRouter);
 apiRouter.use("/ideas", ideasRouter);
 apiRouter.use("/comments", commentsRoot);
+apiRouter.use("/notifications", notificationsRouter);
 apiRouter.use("/swagger", swaggerRouter);
 
 export default apiRouter;

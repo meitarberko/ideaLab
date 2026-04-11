@@ -91,3 +91,29 @@ test("DELETE /api/ideas/:id/likes removes like", async () => {
   const likeCount = await Like.countDocuments({ ideaId: idea._id });
   expect(likeCount).toBe(0);
 });
+
+test("GET /api/ideas/:id/likes lists likers with profile data", async () => {
+  const owner = await registerUser(app, { username: "ownerLike", email: "ownerLike@test.com" });
+  const liker1 = await registerUser(app, { username: "likerA", email: "likerA@test.com" });
+  const liker2 = await registerUser(app, { username: "likerB", email: "likerB@test.com" });
+  const idea = await Idea.create({
+    authorId: new mongoose.Types.ObjectId(owner.body.user.id),
+    text: "idea"
+  });
+
+  await Like.create({ userId: new mongoose.Types.ObjectId(liker1.body.user.id), ideaId: idea._id });
+  await new Promise((r) => setTimeout(r, 5));
+  await Like.create({ userId: new mongoose.Types.ObjectId(liker2.body.user.id), ideaId: idea._id });
+
+  const invalid = await request(app).get("/api/ideas/not-valid/likes");
+  expect(invalid.status).toBe(400);
+
+  const missing = await request(app).get(`/api/ideas/${new mongoose.Types.ObjectId().toString()}/likes`);
+  expect(missing.status).toBe(404);
+
+  const res = await request(app).get(`/api/ideas/${idea._id.toString()}/likes`);
+  expect(res.status).toBe(200);
+  expect(res.body.items).toHaveLength(2);
+  expect(res.body.items[0].username).toBe("likerB");
+  expect(res.body.items[1].username).toBe("likerA");
+});

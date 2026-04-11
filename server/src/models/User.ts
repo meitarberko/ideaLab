@@ -11,6 +11,7 @@ export interface UserDoc {
   googleId?: string;
   avatarUrl?: string;
   refreshTokenHashes: string[];
+  notificationsSeenAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,7 +24,8 @@ const userSchema = new Schema<UserDoc>(
     provider: { type: String, required: true },
     googleId: { type: String },
     avatarUrl: { type: String },
-    refreshTokenHashes: { type: [String], default: [] }
+    refreshTokenHashes: { type: [String], default: [] },
+    notificationsSeenAt: { type: Date }
   },
   { timestamps: true }
 );
